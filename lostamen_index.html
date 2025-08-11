@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>lostamen — 공대원 채찍질</title>
+  <!-- Google Font: Noto Sans KR -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --card:#0f1720;
+      --muted:#9aa6b2;
+      --gold:#d4af37;
+      --accent:rgba(212,175,55,0.12);
+      --glass:rgba(255,255,255,0.03);
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;padding:28px;font-family:'Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background:linear-gradient(180deg,#071016 0%, #07131a 60%);
+      color:#e6eef6; -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;line-height:1.5;
+    }
+
+    /* 레이아웃 */
+    .container{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr;gap:18px}
+    header{display:flex;align-items:center;gap:16px}
+    .logo{display:flex;flex-direction:column;gap:4px}
+    .title{font-size:26px;font-weight:900;color:var(--gold);letter-spacing:0.6px}
+    .subtitle{font-size:13px;color:var(--muted)}
+
+    /* 배너 영역 */
+    .banners{display:grid;grid-template-areas:'top' 'main' 'bottom';gap:12px}
+    .banner-row{display:flex;gap:12px;align-items:center}
+    .banner-slot{background:var(--glass);border-radius:12px;padding:6px;flex:1;min-height:56px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .banner-slot img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+    .banner-controls{display:flex;gap:8px;margin-top:6px}
+    .small{font-size:12px;color:var(--muted)}
+
+    /* 카드 */
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:var(--radius);padding:18px;box-shadow:0 6px 14px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.02)}
+
+    /* 캐릭터 섹션 */
+    .character-area{display:flex;gap:18px;align-items:flex-start}
+    .avatar-wrap{width:220px;min-width:160px;background:linear-gradient(180deg, rgba(212,175,55,0.06), transparent);padding:12px;border-radius:12px;display:flex;justify-content:center;align-items:center}
+    .avatar{width:180px;height:180px;border-radius:12px;object-fit:cover;background:#061016}
+
+    .char-info{flex:1;padding:8px}
+    .char-row{display:flex;justify-content:space-between;align-items:center}
+    .char-name{font-weight:800;font-size:20px;color:var(--gold)}
+    .meta{color:var(--muted);font-size:13px}
+
+    .stats{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+    .stat{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:10px;border-radius:10px;min-width:120px}
+    .stat h4{margin:0;font-size:13px;color:var(--muted)}
+    .stat p{margin:6px 0 0;font-weight:700}
+
+    .gear-list{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+    .gear-item{display:flex;justify-content:space-between;background:rgba(255,255,255,0.02);padding:8px;border-radius:8px}
+
+    .controls{display:flex;gap:10px;align-items:center;margin-top:12px}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px 14px;border-radius:10px;color:var(--gold);cursor:pointer}
+    button.secondary{color:var(--muted);border-style:dashed}
+    .status{font-size:13px;color:var(--muted)}
+
+    /* 메시지 게시판 */
+    .board{display:flex;gap:18px}
+    .board-left{flex:1}
+    .board-right{width:340px}
+    .post-form{display:flex;flex-direction:column;gap:8px}
+    input[type='text'], textarea{background:transparent;border:1px solid rgba(255,255,255,0.03);padding:10px;border-radius:10px;color:inherit}
+    .post{background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
+    .post header{display:flex;justify-content:space-between;gap:8px}
+    .chip{background:linear-gradient(90deg, rgba(212,175,55,0.12), transparent);padding:4px 8px;border-radius:999px;color:var(--gold);font-weight:700}
+
+    /* 애니메이션 */
+    .fade-in{opacity:0;transform:translateY(8px);transition:opacity .6s ease, transform .6s ease}
+    .fade-in.show{opacity:1;transform:none}
+
+    /* 반응형 */
+    @media(max-width:880px){
+      .character-area{flex-direction:column}
+      .avatar{width:160px;height:160px}
+      .board{flex-direction:column}
+      .board-right{width:100%}
+    }
+
+    footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="fade-in">
+      <div class="logo">
+        <div class="title">lostamen</div>
+        <div class="subtitle">공대원 채찍질 — 장용노예2호</div>
+      </div>
+      <div style="margin-left:auto;text-align:right;">
+        <div class="small">테스트 닉네임: <strong>장용노예2호</strong></div>
+        <div class="small">자동 갱신: 1시간 간격</div>
+      </div>
+    </header>
+
+    <!-- 배너 섹션: 상/좌/우/하 슬롯 -->
+    <section class="banners card fade-in" id="bannerSection">
+      <div style="display:flex;gap:12px;align-items:center;">
+        <div style="flex:1">
+          <div style="font-weight:800;color:var(--gold);margin-bottom:8px">공지 배너 (관리자 편집)</div>
+          <div style="display:flex;gap:8px;">
+            <div class="banner-slot" id="banner-top">
+              <span class="small">Top banner</span>
+            </div>
+            <div class="banner-slot" id="banner-left" style="width:120px;min-width:120px">
+              <span class="small">Left</span>
+            </div>
+            <div class="banner-slot" id="banner-right" style="width:120px;min-width:120px">
+              <span class="small">Right</span>
+            </div>
+            <div class="banner-slot" id="banner-bottom">
+              <span class="small">Bottom</span>
+            </div>
+          </div>
+          <div class="banner-controls">
+            <label class="small">이미지 업로드:</label>
+            <input type="file" id="bannerInputTop" accept="image/*">
+            <input type="file" id="bannerInputLeft" accept="image/*">
+            <input type="file" id="bannerInputRight" accept="image/*">
+            <input type="file" id="bannerInputBottom" accept="image/*">
+            <button id="clearBanners" class="secondary">배너 초기화</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 캐릭터 정보 -->
+    <section class="card character-area fade-in" id="characterCard">
+      <div class="avatar-wrap">
+        <img id="avatarImg" class="avatar" src="" alt="아바타">
+      </div>
+      <div class="char-info">
+        <div class="char-row">
+          <div>
+            <div class="char-name" id="charName">장용노예2호</div>
+            <div class="meta" id="charServer">서버: -</div>
+          </div>
+          <div style="text-align:right">
+            <div class="meta">길드: <span id="charGuild">-</span></div>
+            <div class="meta">직업: <span id="charClass">-</span></div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <h4>아이템 레벨</h4>
+            <p id="itemLevel">-</p>
+          </div>
+          <div class="stat">
+            <h4>전투력</h4>
+            <p id="combatPower">-</p>
+          </div>
+          <div class="stat">
+            <h4>업데이트</h4>
+            <p id="lastUpdated">-</p>
+          </div>
+        </div>
+
+        <div class="gear-list" id="gearList">
+          <div style="font-weight:700;color:var(--muted);font-size:13px">장비 / 각인 요약</div>
+          <div class="gear-item"><div>악세서리</div><div id="gearAcc">-</div></div>
+          <div class="gear-item"><div>팔찌</div><div id="gearBrace">-</div></div>
+          <div class="gear-item"><div>각인 현황</div><div id="engraves">-</div></div>
+        </div>
+
+        <div class="controls">
+          <button id="refreshBtn">데이터 갱신</button>
+          <button id="mockBtn" class="secondary">모의 데이터 사용</button>
+          <div class="status" id="statusText">준비됨</div>
+        </div>
+
+        <div style="margin-top:8px;color:var(--muted);font-size:13px">※ 실제 API 연동: 프록시 또는 서버가 필요합니다. 하단 스크립트 주석 참조</div>
+      </div>
+    </section>
+
+    <!-- 메시지 게시판 -->
+    <section class="card board fade-in" id="boardCard">
+      <div class="board-left">
+        <div style="font-weight:800;color:var(--gold);margin-bottom:10px">지인 소통 게시판</div>
+        <div class="post-form">
+          <input id="postAuthor" type="text" placeholder="작성자(닉네임) — optional">
+          <select id="postCharacter">
+            <option value="장용노예2호">장용노예2호</option>
+          </select>
+          <textarea id="postContent" rows="3" placeholder="짧은 메시지를 남겨보세요 (캐릭터별 코멘트 가능)"></textarea>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="postBtn">등록</button>
+            <button id="clearPosts" class="secondary">전체 삭제</button>
+            <div style="margin-left:auto;color:var(--muted);font-size:13px">로컬 저장소에 보관됩니다</div>
+          </div>
+        </div>
+
+        <div id="postsList" style="margin-top:12px;display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <aside class="board-right">
+        <div style="font-weight:800;color:var(--gold);margin-bottom:10px">빠른 정보</div>
+        <div class="post">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="small">자동 갱신 주기</div>
+            <div class="chip">1시간</div>
+          </div>
+          <div style="margin-top:8px" class="small">마지막 갱신: <span id="lastFetchShort">-</span></div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="post">
+          <div class="small">관리자 기능</div>
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <input id="adminNotice" type="text" placeholder="공지 문구">
+            <button id="saveNotice">저장</button>
+          </div>
+          <div id="noticeShow" style="margin-top:8px;color:var(--muted);"></div>
+        </div>
+      </aside>
+    </section>
+
+    <footer class="fade-in">사이트를 더 확장하려면 gptonline.ai/ko 를 확인하세요.</footer>
+  </div>
+
+  <script>
+    // =========================
+    // 설정 섹션 (사용자 환경에 맞게 수정)
+    // =========================
+    // 실제 로스트아크 API를 호출하려면 서버 프록시가 필요합니다.
+    // 예시: 프록시 URL은 서버에서 Authorization: Bearer <API_KEY> 헤더를 붙여 요청한 뒤 CORS 허용하도록 해야 합니다.
+    // 예: const PROXY_URL = 'https://your-proxy.example.com/lostark?name=' + encodeURIComponent(name)
+
+    const TEST_NICK = '장용노예2호';
+    const AUTO_REFRESH_MS = 60 * 60 * 1000; // 1시간
+    // const PROXY_URL_BASE = 'https://your-proxy.example.com/lostark?name='; // << 여기에 프록시 주소를 넣으세요
+
+    // =========================
+    // 유틸: 엘리먼트, 로컬스토리지 관리
+    // =========================
+    const $ = (s)=>document.querySelector(s);
+    const $$ = (s)=>document.querySelectorAll(s);
+
+    function setStatus(msg){$('#statusText').textContent = msg}
+
+    // 배너 로드/저장 (localStorage에 base64 이미지 저장)
+    const bannerKeys = {top:'banner_top',left:'banner_left',right:'banner_right',bottom:'banner_bottom'};
+    function loadBanners(){
+      Object.entries(bannerKeys).forEach(([slot,key])=>{
+        const raw = localStorage.getItem(key);
+        const el = document.getElementById('banner-'+slot);
+        el.innerHTML = '';
+        if(raw){
+          const img = document.createElement('img'); img.src = raw; el.appendChild(img);
+        } else {
+          const span = document.createElement('span'); span.className='small'; span.textContent = slot.toUpperCase(); el.appendChild(span);
+        }
+      });
+    }
+    function setupBannerInputs(){
+      [['#bannerInputTop','top'],['#bannerInputLeft','left'],['#bannerInputRight','right'],['#bannerInputBottom','bottom']].forEach(([sel,slot])=>{
+        const input = document.querySelector(sel);
+        input.addEventListener('change',e=>{
+          const f = e.target.files[0]; if(!f) return;
+          const reader = new FileReader();
+          reader.onload = ()=>{ localStorage.setItem(bannerKeys[slot], reader.result); loadBanners(); }
+          reader.readAsDataURL(f);
+        });
+      });
+      document.getElementById('clearBanners').addEventListener('click',()=>{
+        Object.values(bannerKeys).forEach(k=>localStorage.removeItem(k)); loadBanners();
+      })
+    }
+
+    // =========================
+    // 캐릭터 데이터 처리 (모의 데이터 또는 실제 API)
+    // =========================
+    // 실제 연동은 서버 프록시를 통해 아래 주석을 참고해 구현하세요.
+    async function fetchCharacterData(name){
+      setStatus('데이터 로드 중...');
+      // 실제 API 호출 예시 (프록시 필요)
+      /*
+      if(!PROXY_URL_BASE) throw new Error('프록시가 설정되어 있지 않습니다');
+      const res = await fetch(PROXY_URL_BASE + encodeURIComponent(name));
+      if(!res.ok) throw new Error('API 에러');
+      return await res.json();
+      */
+
+      // 프로덕션 연결 전에는 모의 데이터 반환
+      await new Promise(r=>setTimeout(r,700));
+      return mockCharacter(name);
+    }
+
+    function applyCharacterData(data){
+      // data 스키마는 실제 API에 따라 달라질 수 있으니 이 파일에서는 간단 매핑을 수행합니다.
+      $('#charName').textContent = data.name || TEST_NICK;
+      $('#charServer').textContent = '서버: ' + (data.server || '-');
+      $('#charGuild').textContent = data.guild || '-';
+      $('#charClass').textContent = data.class || '-';
+      $('#itemLevel').textContent = data.itemLevel ?? '-';
+      $('#combatPower').textContent = data.combatPower ?? '-';
+      $('#lastUpdated').textContent = data.updatedAt || '-';
+      $('#avatarImg').src = data.avatar || '';
+      $('#gearAcc').textContent = data.accessory || '-';
+      $('#gearBrace').textContent = data.bracelet || '-';
+      $('#engraves').textContent = data.engraves || '-';
+      $('#lastFetchShort').textContent = (new Date()).toLocaleString();
+      setStatus('최신 데이터 적용됨');
+      document.querySelectorAll('.fade-in').forEach(el=>el.classList.add('show'));
+    }
+
+    // 수동 갱신 핸들러
+    async function refreshNow(){
+      try{
+        setStatus('갱신 중...');
+        const data = await fetchCharacterData(TEST_NICK);
+        applyCharacterData(data);
+        localStorage.setItem('lastFetchAt', Date.now());
+        localStorage.setItem('charData_'+TEST_NICK, JSON.stringify(data));
+      }catch(err){
+        console.error(err); setStatus('갱신 실패: '+(err.message||err));
+      }
+    }
+
+    // 자동 갱신: 페이지 로드 후 1시간 간격
+    function setupAutoRefresh(){
+      // 즉시 로드된 데이터가 없으면 먼저 로드
+      const saved = localStorage.getItem('charData_'+TEST_NICK);
+      if(saved){ try{ applyCharacterData(JSON.parse(saved)); } catch(e){} }
+      const last = localStorage.getItem('lastFetchAt');
+      if(!last || Date.now() - last > AUTO_REFRESH_MS){ refreshNow(); }
+      setInterval(refreshNow, AUTO_REFRESH_MS);
+      $('#refreshBtn').addEventListener('click',refreshNow);
+      $('#mockBtn').addEventListener('click', ()=>{ applyCharacterData(mockCharacter(TEST_NICK)); setStatus('모의 데이터 적용됨'); });
+    }
+
+    // =========================
+    // 게시판 (localStorage 기반)
+    // =========================
+    function loadPosts(){
+      const raw = localStorage.getItem('posts') || '[]';
+      let arr = [];
+      try{ arr = JSON.parse(raw); }catch(e){ arr = []; }
+      const list = $('#postsList'); list.innerHTML='';
+      arr.slice().reverse().forEach(p=>{
+        const el = document.createElement('div'); el.className='post';
+        el.innerHTML = `<header><strong>${escapeHtml(p.author||'익명')}</strong><div class='small'>${escapeHtml(p.character)}</div></header><div style='margin-top:6px'>${escapeHtml(p.content)}</div><div style='margin-top:8px;text-align:right'><small class='small'>${new Date(p.ts).toLocaleString()}</small></div>`;
+        list.appendChild(el);
+      });
+    }
+    function addPost(character, author, content){
+      if(!content || content.trim()==='') return;
+      const raw = localStorage.getItem('posts') || '[]';
+      let arr = JSON.parse(raw);
+      arr.push({character, author, content, ts: Date.now()});
+      localStorage.setItem('posts', JSON.stringify(arr));
+      loadPosts();
+    }
+
+    // 게시판 이벤트
+    function setupBoard(){
+      $('#postBtn').addEventListener('click',()=>{
+        const a = $('#postAuthor').value.trim();
+        const c = $('#postCharacter').value;
+        const txt = $('#postContent').value.trim();
+        addPost(c, a, txt);
+        $('#postContent').value=''; $('#postAuthor').value='';
+      });
+      $('#clearPosts').addEventListener('click',()=>{ if(confirm('정말 전체 게시글을 삭제하시겠습니까?')){ localStorage.removeItem('posts'); loadPosts(); } });
+      loadPosts();
+    }
+
+    // 공지 저장
+    function setupNotice(){
+      const inpt = $('#adminNotice'); const show = $('#noticeShow');
+      $('#saveNotice').addEventListener('click',()=>{
+        const v = inpt.value.trim(); localStorage.setItem('admin_notice', v); show.textContent = v; inpt.value='';
+      });
+      const saved = localStorage.getItem('admin_notice'); if(saved) show.textContent = saved;
+    }
+
+    // =========================
+    // 모의 데이터 (로컬 데모용)
+    // =========================
+    function mockCharacter(name){
+      return {
+        name: name,
+        server: '카마인',
+        guild: '채찍단',
+        class: '버서커',
+        itemLevel: Math.floor(1500 + Math.random()*300),
+        combatPower: Math.floor(100000 + Math.random()*40000),
+        avatar: 'https://images.unsplash.com/photo-1602524819170-51aeb0f3f9f4?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=6a6f2f7e1b1a5b4a',
+        accessory: '아르고스 반지 +12',
+        bracelet: '황금 팔찌',
+        engraves: '정밀함 Lv2, 쿨다운 감소 Lv3',
+        updatedAt: new Date().toLocaleString()
+      }
+    }
+
+    // =========================
+    // 안전 문자열 이스케이프
+    // =========================
+    function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]}); }
+
+    // =========================
+    // 초기화
+    // =========================
+    document.addEventListener('DOMContentLoaded',()=>{
+      setupBannerInputs(); loadBanners(); setupAutoRefresh(); setupBoard(); setupNotice();
+      // 페이드인 트리거 (스크롤 애니메이션)
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('show'); });
+      },{threshold:0.12});
+      document.querySelectorAll('.fade-in').forEach(el=>io.observe(el));
+    });
+
+    // =========================
+    // 추가: 개발자용 빠른 사용법 안내 (콘솔)
+    // =========================
+    console.log('lostamen 로컬 테스트 모드입니다. 실제 API 사용 시 PROXY_URL_BASE를 설정하세요.');
+
+  </script>
+</body>
+</html>
