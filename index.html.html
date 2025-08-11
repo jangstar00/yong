@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>싱글벙글-군장검사</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg:#0b0f14; --panel:#0f1720; --muted:#9aa6b2; --gold:#d4af37; --glass:rgba(255,255,255,0.03); --radius:16px }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;padding:28px;font-family:'Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#071016 0%, #07131a 60%);color:#e6eef6;line-height:1.55}
+    .container{max-width:1120px;margin:0 auto;display:grid;gap:18px}
+
+    /* 헤더 */
+    header{display:flex;gap:14px;align-items:center}
+    .brand{display:flex;flex-direction:column}
+    .brand h1{margin:0;font-size:28px;color:var(--gold);letter-spacing:.6px}
+    .brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+
+    /* 카드 & 공통 */
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:var(--radius);padding:18px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 6px 18px rgba(0,0,0,.5)}
+    .section-title{font-weight:900;color:var(--gold);margin:0 0 10px}
+    .small{font-size:12px;color:var(--muted)}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.08);padding:10px 14px;border-radius:12px;color:var(--gold);cursor:pointer}
+    button:hover{filter:brightness(1.08)}
+
+    /* 단일 배너 */
+    .banner{background:var(--glass);border-radius:12px;min-height:110px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .banner img{width:200%;height:100%;object-fit:cover}
+
+    /* 공지 표시(읽기) */
+    .notice{background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);border:1px solid rgba(255,255,255,.04);border-radius:12px;padding:12px}
+
+    /* 캐릭터 그리드 */
+    .controls{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .card-char{background:var(--panel);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;align-items:stretch}
+    .card-char img{width:100%;aspect-ratio:1/1;border-radius:12px;object-fit:cover;background:#061016}
+    .name{margin:8px 0 2px;font-weight:900;color:var(--gold)}
+    .meta{font-size:12px;color:var(--muted)}
+    .row{display:flex;justify-content:space-between;margin-top:6px}
+
+    /* 게시판 */
+    .board-grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
+    .post-list{display:grid;gap:10px}
+    .post{background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);border:1px solid rgba(255,255,255,.04);padding:12px;border-radius:12px}
+    .post header{display:flex;justify-content:space-between;align-items:center}
+    .post .meta{font-size:12px;color:var(--muted)}
+    .danger{border-color:rgba(255,0,0,.25);color:#ffb3b3}
+    .pw-toggle{display:flex;align-items:center;gap:6px}
+
+    /* 애니메이션 */
+    .fade{opacity:0;transform:translateY(8px);transition:opacity .6s ease, transform .6s ease}
+    .fade.show{opacity:1;transform:none}
+
+    @media (max-width:1000px){ .grid{grid-template-columns:repeat(3,1fr)} }
+    @media (max-width:720px){ .grid{grid-template-columns:repeat(2,1fr)} .board-grid{grid-template-columns:1fr} }
+    footer{margin-top:8px;text-align:center;color:var(--muted);font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="fade">
+      <div class="brand">
+        <h1>lostamen</h1>
+        <p>싱글벙글-군장검사</p>
+      </div>
+    </header>
+
+    <!-- 단일 배너 (관리자 코드로만 설정) -->
+    <section class="card fade">
+      <h3 class="section-title">공지 배너</h3>
+      <div class="banner" id="bannerArea"></div>
+    </section>
+
+    <!-- 공지 (관리자 코드로만 설정) -->
+    <section class="card fade">
+      <h3 class="section-title">공지</h3>
+      <div class="notice" id="noticeArea"></div>
+    </section>
+
+    <!-- 다중 캐릭터 그리드 -->
+    <section class="card fade" id="chars">
+      <div class="controls">
+        <button id="refreshAll">전체 갱신</button>
+        <button id="useMock" class="small">모의 데이터</button>
+        <span id="status" class="small" style="margin-left:auto">준비됨 · 1시간 자동 갱신</span>
+      </div>
+      <div id="charGrid" class="grid"></div>
+      <div class="small" style="margin-top:6px">정렬 기준: 아이템 레벨 (내림차순)</div>
+    </section>
+
+    <!-- 게시판 -->
+    <section class="card fade" id="board">
+      <h3 class="section-title">지인 소통 게시판</h3>
+      <div class="board-grid">
+        <div>
+          <div style="display:grid;gap:8px;margin-bottom:10px">
+            <input id="author" type="text" placeholder="작성자" />
+            <textarea id="content" rows="4" placeholder="내용 (줄바꿈: Enter, 전송: Ctrl/⌘+Enter)"></textarea>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input id="pwd" type="password" placeholder="비밀번호 (삭제 시 필요)" />
+              <label class="small pw-toggle"><input id="pwdToggle" type="checkbox" /> 비밀번호 표시</label>
+              <span class="small" style="margin-left:auto">단축키: <strong>Ctrl/⌘+Enter</strong> 등록</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="btnPost">등록</button>
+              <span class="small" id="postHint">비밀번호는 글마다 개별 저장됩니다(로컬 전용)</span>
+            </div>
+          </div>
+          <div id="posts" class="post-list"></div>
+        </div>
+        <aside>
+          <div class="notice">
+            <div class="small">안내</div>
+            <div class="small" style="margin-top:6px">게시글은 브라우저 <strong>로컬 저장소</strong>에 저장됩니다. 다른 기기에서는 보이지 않습니다.</div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <footer class="fade">© 2025 lostamen</footer>
+  </div>
+
+  <script>
+    // =========================
+    // 관리자 설정 (코드에서만 수정)
+    // =========================
+    const ADMIN_CHARACTERS = [
+      '장용노예2호','애이르','오바때끼','우니꼬쏠쏠'
+    ].slice(0,20);
+
+    const ADMIN_BANNER_IMG = 'lostarkboss.webp';
+    const ADMIN_NOTICE_TEXT = '카제로스 더퍼스트 가실 분 공대장:김민지';
+
+    const API_BASE = 'https://yong-qgw8.vercel.app'; // 예: /character 함수가 루트에 매핑되어 있다고 가정
+    const AUTO_MS = 60*60*1000; // 1시간
+
+    const $ = s=>document.querySelector(s);
+    const qs = s=>document.querySelectorAll(s);
+
+    // ========================= 배너 & 공지 (읽기 전용) =========================
+    function bootBannerNotice(){
+      const b = $('#bannerArea'); b.innerHTML = ADMIN_BANNER_IMG ? `<img src="${ADMIN_BANNER_IMG}" alt="배너">` : '<div class="small">배너 이미지 없음</div>';
+      const n = $('#noticeArea'); n.textContent = ADMIN_NOTICE_TEXT || '공지 없음';
+    }
+
+    // ========================= 유틸 =========================
+    function setStatus(t){ $('#status').textContent = t }
+    function parseItemLevel(raw){ if(!raw) return 0; const num = parseFloat(String(raw).replace(/[^0-9.]/g,'')); return isNaN(num)?0:num; }
+    function esc(s){ return String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+    function escNl(s){ return esc(s).replace(/\n/g,'<br>'); }
+    function fmt(ts){ const d=new Date(ts); const z=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}` }
+    async function hashPwd(p){
+      if(!window.crypto?.subtle) return p; // fallback
+      const enc = new TextEncoder().encode(p);
+      const buf = await crypto.subtle.digest('SHA-256', enc);
+      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+
+    // ========================= API 연동 =========================
+    async function fetchChar(name){
+      // API 주소 미설정 시 모의 데이터로 대체
+      if(!API_BASE){ return mockChar(name); }
+      const res = await fetch(`${API_BASE}/character?name=${encodeURIComponent(name)}`);
+      if(!res.ok){ throw new Error(`API 오류: ${res.status}`); }
+      const raw = await res.json();
+      return mapArmory(raw);
+    }
+
+    function mapArmory(raw){
+      const p = raw.ArmoryProfile||{};
+      return {
+        name: p.CharacterName||'-',
+        server: p.ServerName||'-',
+        avatar: p.CharacterImage||'',
+        itemLevelText: p.ItemMaxLevel||'-',
+        itemLevelNum: parseItemLevel(p.ItemMaxLevel),
+        combatPower: '-',
+      };
+    }
+
+    // ========================= 모의 데이터 =========================
+    function mockChar(name){
+      const ilv = 1500 + Math.floor(Math.random()*300);
+      return {
+        name,
+        server: '아만',
+        avatar: 'https://images.unsplash.com/photo-1602524819170-51aeb0f3f9f4?q=80&w=600&auto=format&fit=crop',
+        itemLevelText: ilv.toFixed(2),
+        itemLevelNum: ilv,
+        combatPower: (100000 + Math.floor(Math.random()*50000)).toLocaleString()
+      };
+    }
+
+    // ========================= 캐릭터 렌더링 =========================
+    function renderSkeleton(){
+      const wrap = $('#charGrid');
+      wrap.innerHTML = ADMIN_CHARACTERS.map(()=>`
+        <div class="card-char">
+          <div style="width:100%;aspect-ratio:1/1;border-radius:12px;background:linear-gradient(90deg, rgba(255,255,255,.06), transparent);"></div>
+          <div class="name" style="margin-top:8px">불러오는 중...</div>
+          <div class="meta">서버: -</div>
+          <div class="row"><span class="small">아이템 레벨</span><strong>-</strong></div>
+          <div class="row"><span class="small">전투력</span><strong>-</strong></div>
+        </div>`).join('');
+    }
+
+    function renderGrid(list){
+      const wrap = $('#charGrid');
+      wrap.innerHTML = list.map(it=>{
+        const avatar = it.avatar || 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23061016"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%239aa6b2" font-size="16">NO IMAGE</text></svg>`);
+        return `
+          <div class="card-char">
+            <img src="${avatar}" alt="${esc(it.name)} 아바타">
+            <div class="name">${esc(it.name)}</div>
+            <div class="meta">서버: ${esc(it.server)}</div>
+            <div class="row"><span class="small">아이템 레벨</span><strong>${esc(it.itemLevelText)}</strong></div>
+            <div class="row"><span class="small">전투력</span><strong>${esc(it.combatPower)}</strong></div>
+          </div>`;
+      }).join('');
+      setStatus(`표시: ${list.length}개 · 정렬: 아이템 레벨`);
+    }
+
+    // ========================= 캐릭터 데이터 갱신 흐름 =========================
+    async function refreshAll(){
+      try{
+        setStatus('전체 불러오는 중...');
+        renderSkeleton();
+        const names = ADMIN_CHARACTERS;
+        const results = await Promise.allSettled(names.map(n=>fetchChar(n)));
+        let list = results.map((r,i)=> r.status==='fulfilled'? r.value : mockChar(names[i]));
+        list = list.sort((a,b)=> b.itemLevelNum - a.itemLevelNum);
+        renderGrid(list);
+        localStorage.setItem('gridCache', JSON.stringify(list));
+        localStorage.setItem('lastFetchAt', Date.now());
+      }catch(err){
+        setStatus('실패: '+err.message+' · 모의 데이터로 대체');
+        const list = ADMIN_CHARACTERS.map(n=>mockChar(n)).sort((a,b)=> b.itemLevelNum - a.itemLevelNum);
+        renderGrid(list);
+      }
+    }
+
+    function bootChars(){
+      const cache = localStorage.getItem('gridCache');
+      if(cache){ try{ renderGrid(JSON.parse(cache)); }catch(_){} }
+      refreshAll();
+      $('#refreshAll').addEventListener('click', refreshAll);
+      $('#useMock').addEventListener('click', ()=>{ const list=ADMIN_CHARACTERS.map(n=>mockChar(n)).sort((a,b)=> b.itemLevelNum - a.itemLevelNum); renderGrid(list); setStatus('모의 데이터 적용'); });
+      setInterval(refreshAll, AUTO_MS);
+    }
+
+    // ========================= 게시판 (로컬 저장 + 비밀번호 삭제) =========================
+    function loadPosts(){
+      const arr = JSON.parse(localStorage.getItem('posts')||'[]');
+      const wrap = $('#posts'); wrap.innerHTML='';
+      arr.slice().reverse().forEach((p)=>{
+        const el=document.createElement('div'); el.className='post';
+        el.innerHTML = `
+          <header>
+            <strong>${esc(p.author||'익명')}</strong>
+            <span class="meta">${fmt(p.ts)}</span>
+          </header>
+          <div style="margin-top:8px">${escNl(p.content)}</div>
+          <div style="margin-top:10px;text-align:right">
+            <button class="danger small" data-id="${p.id}">삭제</button>
+          </div>`;
+        wrap.appendChild(el);
+      });
+      wrap.querySelectorAll('button[data-id]').forEach(btn=>{
+        btn.addEventListener('click', async (e)=>{
+          const id = e.currentTarget.getAttribute('data-id');
+          const input = prompt('이 글의 비밀번호를 입력하세요');
+          if(input==null) return;
+          const arr = JSON.parse(localStorage.getItem('posts')||'[]');
+          const i = arr.findIndex(x=>String(x.id)===String(id));
+          if(i<0){ alert('글을 찾을 수 없습니다'); return; }
+          const h = await hashPwd(input);
+          if(arr[i].pwdHash !== h){ alert('비밀번호가 일치하지 않습니다'); return; }
+          arr.splice(i,1);
+          localStorage.setItem('posts', JSON.stringify(arr));
+          loadPosts();
+          alert('삭제되었습니다');
+        });
+      });
+    }
+
+    async function addPost(){
+      const author = $('#author').value.trim();
+      const content = $('#content').value.trim();
+      const pwd = $('#pwd').value;
+      if(!content){ alert('내용을 입력하세요'); return; }
+      if(!pwd){ alert('비밀번호를 입력하세요(삭제 시 필요)'); return; }
+      const pwdHash = await hashPwd(pwd);
+      const arr = JSON.parse(localStorage.getItem('posts')||'[]');
+      const post = { id: Date.now()+Math.random().toString(36).slice(2), author, content, ts: Date.now(), pwdHash };
+      arr.push(post);
+      localStorage.setItem('posts', JSON.stringify(arr));
+      $('#author').value=''; $('#content').value=''; $('#pwd').value='';
+      loadPosts();
+    }
+
+    function bootBoard(){
+      $('#btnPost').addEventListener('click', addPost);
+      // Ctrl/⌘ + Enter 제출
+      const contentEl = document.getElementById('content');
+      if(contentEl){
+        contentEl.addEventListener('keydown',(e)=>{
+          if(e.key==='Enter' && (e.ctrlKey || e.metaKey)){
+            e.preventDefault();
+            addPost();
+          }
+        });
+      }
+      // 비밀번호 표시 토글
+      const toggle = document.getElementById('pwdToggle');
+      const pwd = document.getElementById('pwd');
+      if(toggle && pwd){ toggle.addEventListener('change',()=>{ pwd.type = toggle.checked ? 'text' : 'password'; }); }
+      loadPosts();
+    }
+
+    // ========================= 페이드인 =========================
+    function bootFade(){
+      const io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('show'); }); },{threshold:.12});
+      qs('.fade').forEach(el=>io.observe(el));
+    }
+
+    // ========================= 초기화 =========================
+    document.addEventListener('DOMContentLoaded',()=>{
+      bootBannerNotice(); bootChars(); bootBoard(); bootFade();
+    });
+  </script>
+</body>
+</html>
