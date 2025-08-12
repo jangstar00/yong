@@ -287,7 +287,7 @@
     function escNl(s){ return esc(s).replace(/\n/g,'<br>'); }
     function stripTags(s){ return String(s||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(); }
 
-    // 객체/문자열 모두 처리
+    // Tooltip 문자열/객체 모두 평탄화
     function flattenTooltip(tooltipRaw){
       if(!tooltipRaw) return '';
       var j = tooltipRaw;
@@ -318,6 +318,13 @@
         .map(function(s){ return stripTags(s); });
     }
 
+    // Stats에서 전투력 우선, 없으면 공격력
+    function pickCombatPower(stats){
+      if(!Array.isArray(stats)) return null;
+      var find = function(kw){ return (stats.find(function(s){ return String(s && (s.Type||s.Name)||'').includes(kw); })||{}).Value || null; };
+      return find('전투력') || find('Combat Power') || find('공격력') || null;
+    }
+
     /* ========================= 네트워크 유실 대응(fetch 재시도) ========================= */
     function sleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
     async function fetchJsonWithRetry(url, retries, backoff){
@@ -334,7 +341,7 @@
       }
     }
 
-    /* ========================= 캐릭터 API (KLOA 플로우 호환, plain=1 사용) ========================= */
+    /* ========================= 캐릭터 API (plain=1 강제, 정규화) ========================= */
     async function fetchChar(name){
       var url = API_BASE + '/character?name=' + encodeURIComponent(name) + '&plain=1&_t=' + Date.now();
       try{
@@ -367,6 +374,7 @@
         };
 
         var mapped = mapArmory(normalized);
+        __dbg('STATS KEYS', (mapped && mapped._statsDebug) || []);
         __dbg('MAP ' + name, mapped);
         return mapped;
       }catch(err){
@@ -382,23 +390,8 @@
       var equips = raw.ArmoryEquipment || [];
       var engrObj = (raw.ArmoryEngraving && raw.ArmoryEngraving.Engravings) ? raw.ArmoryEngraving.Engravings : [];
 
-      // 전투력/공격력 추출
       var stats = Array.isArray(p.Stats) ? p.Stats : [];
-      function pickStat(keys){
-        for(var i=0;i<stats.length;i++){
-          var s = stats[i] || {};
-          var k = String(s.Type || s.Name || '').toLowerCase();
-          for(var j=0;j<keys.length;j++){
-            if(k.indexOf(keys[j]) !== -1) return s.Value || s.value || null;
-          }
-        }
-        return null;
-      }
-      var combatPower =
-        pickStat(['전투력','combat power','combat']) ||
-        pickStat(['공격력','attack power','attack']) ||
-        '-';
-
+      var combatPower = pickCombatPower(stats) || '-';
       var ilvText = p.ItemMaxLevel || p.ItemAvgLevel || p.ItemLevel || '-';
 
       var engrs = engrObj.map(function(e){
@@ -448,7 +441,8 @@
         itemLevelNum: parseItemLevel(ilvText),
         combatPower: combatPower,
         equipment: eq,
-        engraves: engrs
+        engraves: engrs,
+        _statsDebug: (stats||[]).map(function(s){ return (s.Type||s.Name)+':'+s.Value; })
       };
     }
 
