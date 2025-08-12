@@ -286,9 +286,15 @@
     function esc(s){ return String(s||'').replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m];}); }
     function escNl(s){ return esc(s).replace(/\n/g,'<br>'); }
     function stripTags(s){ return String(s||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(); }
+
+    // 객체/문자열 모두 처리
     function flattenTooltip(tooltipRaw){
       if(!tooltipRaw) return '';
-      var j = {}; try{ j = JSON.parse(String(tooltipRaw).replace(/\\"/g,'"')); }catch(_){ return ''; }
+      var j = tooltipRaw;
+      if (typeof tooltipRaw === 'string') {
+        try { j = JSON.parse(tooltipRaw.replace(/\\"/g,'"')); } catch(_) { return ''; }
+      }
+      if (typeof j !== 'object' || j===null) return '';
       var pick=[], k, v;
       for(k in j){
         v = j[k] && j[k].value;
@@ -328,43 +334,39 @@
       }
     }
 
-    /* ========================= 캐릭터 API (디버그 포함, 호환 강화 통합본) ========================= */
+    /* ========================= 캐릭터 API (KLOA 플로우 호환, plain=1 사용) ========================= */
     async function fetchChar(name){
-      var url = API_BASE + '/character?name=' + encodeURIComponent(name) + '&_t=' + Date.now();
+      var url = API_BASE + '/character?name=' + encodeURIComponent(name) + '&plain=1&_t=' + Date.now();
       try{
         __dbg('REQ ' + name, { url:url });
         var res = await fetch(url, { mode:'cors', cache:'no-store' });
         var status = res.status;
         var text = await res.text();
         __dbg('RES ' + name + ' ('+status+')', text);
-
         if(!res.ok) throw new Error('API '+status);
 
-        var raw; try { raw = JSON.parse(text); } catch(_){ raw = text; }
+        var d; try { d = JSON.parse(text); } catch(_){ d = {}; }
 
-        // 백엔드 통합 응답(data/최상위키) → Lost Ark 원형 구조로 정규화
-        if (raw && !raw.ArmoryProfile) {
-          var d = raw.data && typeof raw.data === 'object' ? raw.data : raw;
-          raw = {
-            ArmoryProfile: {
-              CharacterName: d.name || d.CharacterName || '-',
-              ServerName: d.server || d.ServerName || '-',
-              CharacterClassName: d.cls || d.CharacterClassName || '-',
-              CharacterImage: d.avatar || d.CharacterImage || '',
-              ItemMaxLevel: d.itemLevelText || d.ItemMaxLevel || d.ItemAvgLevel || d.ItemLevel || '-',
-              Stats: Array.isArray(d.stats) ? d.stats : []
-            },
-            ArmoryEquipment: Array.isArray(d.equipment) ? d.equipment : [],
-            ArmoryEngraving: { Engravings: Array.isArray(d.engraves)
-              ? d.engraves.map(function(e){
-                  if (typeof e === 'string') return { Name: e, Level: '' };
-                  return { Name: e.name || e.Name || '', Level: e.level || e.Level || '' };
-                })
-              : [] }
-          };
-        }
+        // Lost Ark 원형 구조로 강제 정규화
+        var normalized = {
+          ArmoryProfile: {
+            CharacterName: d.name || d.CharacterName || '-',
+            ServerName: d.server || d.ServerName || '-',
+            CharacterClassName: d.cls || d.CharacterClassName || '-',
+            CharacterImage: d.avatar || d.CharacterImage || '',
+            ItemMaxLevel: d.itemLevelText || d.ItemMaxLevel || d.ItemAvgLevel || d.ItemLevel || '-',
+            Stats: Array.isArray(d.stats) ? d.stats : (Array.isArray(d.Stats) ? d.Stats : [])
+          },
+          ArmoryEquipment: Array.isArray(d.equipment) ? d.equipment : (Array.isArray(d.ArmoryEquipment) ? d.ArmoryEquipment : []),
+          ArmoryEngraving: {
+            Engravings: Array.isArray(d.engraves) ? d.engraves.map(function(e){
+              if(typeof e==='string') return { Name: e, Level: '' };
+              return { Name: e.name || e.Name || '', Level: e.level || e.Level || '' };
+            }) : (d.ArmoryEngraving && Array.isArray(d.ArmoryEngraving.Engravings) ? d.ArmoryEngraving.Engravings : [])
+          }
+        };
 
-        var mapped = mapArmory(raw);
+        var mapped = mapArmory(normalized);
         __dbg('MAP ' + name, mapped);
         return mapped;
       }catch(err){
@@ -406,29 +408,33 @@
         return (nm + lv).trim();
       });
 
-      // 등급 클래스
       function gradeClass(g){
         g = String(g||'').trim();
-        if (/고대/.test(g)) return 'ancient';    // gold-ish
-        if (/유물/.test(g)) return 'relic';      // red
-        if (/전설/.test(g)) return 'legendary';  // orange
-        if (/영웅/.test(g)) return 'epic';       // purple
-        if (/희귀/.test(g)) return 'rare';       // blue
-        if (/고급/.test(g)) return 'uncommon';   // green
+        if (/고대/.test(g)) return 'ancient';
+        if (/유물/.test(g)) return 'relic';
+        if (/전설/.test(g)) return 'legendary';
+        if (/영웅/.test(g)) return 'epic';
+        if (/희귀/.test(g)) return 'rare';
+        if (/고급/.test(g)) return 'uncommon';
         return 'common';
       }
 
-      // 장비: 품질/툴팁 파싱
       var eq = (equips||[]).map(function(x){
         x = x || {};
-        var lines = extractAffixOptions(x.Tooltip || x.tooltip || '').slice(0,6);
+        var name = x.Name || x.name || '';
+        var grade = x.Grade || x.grade || '';
+        var icon  = x.Icon  || x.icon  || '';
+        var qRaw  = (x.Quality!=null? x.Quality : x.quality);
+        var quality = (typeof qRaw === 'number') ? qRaw : (qRaw!=null ? Number(String(qRaw).replace(/[^0-9]/g,'')) : null);
+        var tooltip = x.Tooltip || x.tooltip || '';
+        var lines = extractAffixOptions(tooltip).slice(0,6);
         return {
-          name: x.Name || '',
-          grade: x.Grade || '',
-          gradeClass: gradeClass(x.Grade || ''),
-          icon: x.Icon || x.icon || '',
-          quality: typeof x.Quality==='number' ? x.Quality : (typeof x.quality==='number' ? x.quality : null),
-          tooltip: x.Tooltip || x.tooltip || '',
+          name: name,
+          grade: grade,
+          gradeClass: gradeClass(grade),
+          icon: icon,
+          quality: (typeof quality==='number' && isFinite(quality)) ? Math.max(0, Math.min(100, quality)) : null,
+          tooltip: tooltip,
           lines: lines
         };
       });
@@ -585,7 +591,7 @@
 
     function bootChars(){
       var cache = localStorage.getItem('gridCache_v3'); if(cache){ try{ renderGrid(JSON.parse(cache)); }catch(_){ } }
-      refreshAll(); // 모바일/PC 모두 즉시 갱신
+      refreshAll();
       $('#refreshAll').addEventListener('click', refreshAll);
       setInterval(refreshAll, AUTO_MS);
       window.addEventListener('online',  function(){ setStatus('온라인 복구: 재동기화 중...'); refreshAll(); });
