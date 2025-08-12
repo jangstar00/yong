@@ -1,101 +1,93 @@
-// api/posts.js
-// 서버리스 함수: 게시판 CRUD (메모리 저장 기본, Vercel Blob 옵션)
-// 런타임: Node 18+
+// /posts.js
+// 간단한 렌더 + 디버그 출력. 모바일에서도 문자열로 볼 수 있게 최소화.
 
-/* =========================
-   선택 1) 메모리 저장 (기본)
-   - 배포/재시작 시 초기화됨 (데모/소규모 용)
-========================= */
-let MEM = [];
+const $log = (msg) => {
+  const box = document.querySelector("#debug") || (() => {
+    const d = document.createElement("pre");
+    d.id = "debug";
+    d.style.whiteSpace = "pre-wrap";
+    d.style.fontSize = "12px";
+    d.style.padding = "8px";
+    d.style.background = "rgba(255,255,255,0.06)";
+    d.style.borderRadius = "8px";
+    d.style.margin = "8px 0";
+    document.body.appendChild(d);
+    return d;
+  })();
+  box.textContent += (typeof msg === "string" ? msg : JSON.stringify(msg, null, 2)) + "\n";
+};
 
-/* =========================
-   선택 2) Vercel Blob 사용 (영구 저장)
-   - 아래 주석 해제 + 환경변수 설정 필요
-   - npm 패키지 설치 없이 @vercel/blob 사용 가능 (Edge/Node 모두)
-   - ENV:
-     BLOB_READ_WRITE_TOKEN=...
-========================= */
-// import { put, list, del, head } from '@vercel/blob';
-// const BLOB_KEY = 'posts.json';
-// async function blobLoad(){ try{ const res = await fetch((await head(BLOB_KEY)).downloadUrl); return await res.json(); } catch{ return []; } }
-// async function blobSave(arr){ await put(BLOB_KEY, JSON.stringify(arr), { access: 'public', contentType: 'application/json' }); }
+async function fetchChar(name, { debug = true, plain = false } = {}) {
+  const url = new URL("https://yong-qgw8.vercel.app/api/character");
+  url.searchParams.set("name", name);
+  if (debug) url.searchParams.set("debug", "1");
+  if (plain) url.searchParams.set("plain", "1");
 
-export default async function handler(req, res) {
-  /* ===== CORS: character.js와 동일한 화이트리스트 ===== */
-  const ORIGIN = req.headers.origin || '';
-  const ALLOWLIST = [
-    'https://jangstar00.github.io',
-    'https://yong-qgw8.vercel.app',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000'
+  $log(`[REQ] ${name}`);
+  $log({ url: url.toString() });
+
+  const r = await fetch(url.toString(), { cache: "no-store" });
+  const j = await r.json().catch(() => ({}));
+
+  $log(`[RES ${name}] status=${r.status}`);
+  $log(j);
+
+  return j;
+}
+
+function renderCard(target, data) {
+  const el = document.querySelector(target);
+  if (!el) return;
+
+  const d = data?.data || data; // plain=1 대비
+  const f = (v, empty = "--") => (v === undefined || v === null || v === "" ? empty : v);
+
+  el.innerHTML = `
+    <div style="display:flex;gap:12px;align-items:center;">
+      <img src="${f(d.avatar, "")}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:8px;background:#222;" />
+      <div>
+        <div style="font-weight:700">${f(d.name)}</div>
+        <div style="opacity:.8">${f(d.server)} | ${f(d.cls)}</div>
+        <div style="opacity:.8">아이템 레벨: ${f(d.itemLevelText)} (${Number(d.itemLevelNum)||0})</div>
+        <div style="opacity:.8">전투력: ${f(d.combatPower)}</div>
+      </div>
+    </div>
+    <div style="margin-top:8px">
+      <div style="font-weight:600;margin:6px 0">각인</div>
+      <ul style="margin:0;padding-left:18px">
+        ${
+          (d.engraves||[])
+            .map(e => `<li>${e.name || ""} <span style="opacity:.7">${e.desc || ""}</span></li>`)
+            .join("") || `<li style="opacity:.7">없음</li>`
+        }
+      </ul>
+    </div>
+  `;
+}
+
+async function main() {
+  const names = [
+    "장용노예2호",
+    "아장르카웅나",
+    "오바때끼",
+    "애이르",
   ];
-  if (ALLOWLIST.includes(ORIGIN)) {
-    res.setHeader('Access-Control-Allow-Origin', ORIGIN);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', 'https://jangstar00.github.io');
-  }
-  res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Max-Age', '600');
 
-  if (req.method === 'OPTIONS') return res.status(204).end();
+  for (const n of names) {
+    const data = await fetchChar(n, { debug: true, plain: false });
+    renderCard(`#card-${encodeURIComponent(n)}`, data);
 
-  // 캐시 금지 (게시판은 즉시 반영)
-  res.setHeader('Cache-Control', 'no-store');
-
-  try {
-    // ▼ Blob 사용 시: 최초 1회 로드 (메모리 싱크)
-    // if (!MEM.length) MEM = await blobLoad();
-
-    if (req.method === 'GET') {
-      // 최신순 정렬
-      const out = [...MEM].sort((a,b)=> (b.ts||0)-(a.ts||0));
-      return res.status(200).json(out);
+    if (!data?.ok) {
+      // ok=false면 화면에도 바로 표시
+      const el = document.querySelector(`#card-${encodeURIComponent(n)}`);
+      if (el) {
+        el.insertAdjacentHTML(
+          "beforeend",
+          `<div style="margin-top:6px;color:#ff7a7a">데이터 없음. API 키/캐릭터명/지역 제한 확인 요망</div>`
+        );
+      }
     }
-
-    if (req.method === 'POST') {
-      const { author = '익명', content = '', pwdHash = '' } = req.body || {};
-      if (!content || typeof content !== 'string') return res.status(400).send('내용 누락');
-      if (!pwdHash || typeof pwdHash !== 'string') return res.status(400).send('pwdHash 누락');
-
-      // 간단 필터링
-      const a = String(author).slice(0, 40).trim();
-      const c = String(content).slice(0, 2000).trim();
-      if (!c) return res.status(400).send('내용이 비어있음');
-
-      const post = {
-        id: globalThis.crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2),
-        author: a || '익명',
-        content: c,
-        pwdHash,
-        ts: Date.now()
-      };
-      MEM.push(post);
-
-      // ▼ Blob 사용 시 저장
-      // await blobSave(MEM);
-
-      return res.status(201).json(post);
-    }
-
-    if (req.method === 'DELETE') {
-      const { id, pwdHash } = req.body || {};
-      if (!id || !pwdHash) return res.status(400).send('id/pwdHash 누락');
-
-      const idx = MEM.findIndex(p => p.id === id && p.pwdHash === pwdHash);
-      if (idx === -1) return res.status(403).send('비밀번호 불일치 또는 글 없음');
-
-      MEM.splice(idx, 1);
-
-      // ▼ Blob 사용 시 저장
-      // await blobSave(MEM);
-
-      return res.status(204).end();
-    }
-
-    return res.status(405).send('Method Not Allowed');
-  } catch (e) {
-    return res.status(500).send(String(e?.message || e));
   }
 }
+
+document.addEventListener("DOMContentLoaded", main);
