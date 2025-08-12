@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>lostamen — 캐릭터 보드</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#0f1720; --muted:#9aa6b2; --gold:#d4af37; --glass:rgba(255,255,255,0.04);
+      --radius:16px; --radius-sm:12px; --shadow:0 6px 18px rgba(0,0,0,.5);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; padding:clamp(10px, 2.8vw, 22px);
+      font-family:'Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background:linear-gradient(180deg,#071016 0%, #07131a 60%);
+      color:#e6eef6; line-height:1.55; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    .container{max-width:1200px;margin:0 auto;display:grid;gap:16px}
+
+    /* 공통 카드 */
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:var(--radius);padding:16px;border:1px solid rgba(255,255,255,0.06);box-shadow:var(--shadow)}
+    .small{font-size:12px;color:var(--muted)}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.12);padding:10px 14px;border-radius:12px;color:var(--gold);cursor:pointer}
+    button:active{transform:translateY(1px)}
+
+    /* 배너 */
+    .top-banner,.bottom-banner{background:var(--glass);border-radius:var(--radius-sm);min-height:110px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .top-banner img,.bottom-banner img{width:100%;height:100%;object-fit:cover;display:block}
+
+    /* 화면 좌우 고정 배너 */
+    .side-float{position:fixed; top:160px; width:160px; z-index:50; background:rgba(0,0,0,.12); border-radius:12px; overflow:hidden}
+    .side-float.left{left:16px}
+    .side-float.right{right:16px}
+    .side-float a{display:block; line-height:0}
+    .side-float img{display:block; width:100%; height:auto; object-fit:cover}
+    @media (max-width:1200px){ .side-float{display:none} }
+
+    /* 메인 1열 (배너와 폭 맞춤) */
+    .main{display:grid;grid-template-columns:1fr;gap:16px}
+
+    /* 캐릭터 그리드 */
+    .controls{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .card-char{background:var(--panel);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;align-items:stretch;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease}
+    .card-char:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.5)}
+    .card-char img{width:100%;aspect-ratio:1/1;border-radius:12px;object-fit:cover;background:#061016}
+    .name{margin:8px 0 2px;font-weight:900;color:var(--gold)}
+    .meta{font-size:12px;color:var(--muted)}
+    .row{display:flex;justify-content:space-between;margin-top:6px}
+
+    /* 공지/게시판 */
+    .notice{background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px}
+    .post-list{display:grid;gap:10px}
+    .post{background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);border:1px solid rgba(255,255,255,.06);padding:12px;border-radius:12px}
+    .post header{display:flex;justify-content:space-between;align-items:center}
+    .post .meta{font-size:12px;color:var(--muted)}
+    .danger{border-color:rgba(255,0,0,.25);color:#ffb3b3}
+
+    /* 상세 모달 (모바일 최적화) */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:9999}
+    .modal.on{display:flex}
+    .panel{max-width:960px;width:100%;background:#0e141c;border:1px solid rgba(255,255,255,.08);border-radius:16px;display:grid;grid-template-columns:320px 1fr;max-height:90vh;overflow:auto}
+    .panel .left{padding:14px;border-right:1px solid rgba(255,255,255,.06)}
+    .panel .right{padding:14px}
+    .closeX{position:sticky;left:100%;top:10px;background:transparent;border:0;color:#cfd8e3;font-size:22px;cursor:pointer}
+    .equip{display:grid;gap:10px}
+    .equip .item{display:flex;gap:10px;background:rgba(255,255,255,.04);padding:10px;border-radius:10px;align-items:center}
+    .engr{display:flex;gap:6px;flex-wrap:wrap}
+    .chip{background:linear-gradient(90deg, rgba(212,175,55,.16), transparent);padding:3px 8px;border-radius:999px;color:var(--gold);font-weight:800;font-size:12px}
+
+    /* 스켈레톤 */
+    .skeleton{position:relative;overflow:hidden;background:linear-gradient(90deg, rgba(255,255,255,.06), transparent)}
+    .skeleton::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);animation:shimmer 1.4s infinite}
+    @keyframes shimmer{100%{transform:translateX(100%)}}
+
+    /* 반응형 */
+    @media (max-width:1100px){ .grid{grid-template-columns:repeat(3,1fr)} .panel{grid-template-columns:1fr} .panel .left{border-right:0;border-bottom:1px solid rgba(255,255,255,.06)} }
+    @media (max-width:760px){ .grid{grid-template-columns:repeat(2,1fr)} .card{padding:12px} .name{font-size:15px} }
+    @media (max-width:520px){ .grid{grid-template-columns:1fr} .top-banner,.bottom-banner{min-height:80px} .controls{gap:6px} button{padding:8px 12px} }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <h2 style="margin:0;color:var(--gold)">lostamen</h2>
+        <span class="small">다중 캐릭터 보드</span>
+      </div>
+      <div style="margin-left:auto" class="small" id="status">준비됨 · 1시간 자동 갱신</div>
+    </header>
+
+    <!-- 상단 배너 (문구 없음) -->
+    <section class="card top-banner" id="bn-top"></section>
+
+    <div class="main">
+      <!-- 캐릭터 그리드 -->
+      <section class="card" id="chars">
+        <div class="controls">
+          <button id="refreshAll">전체 갱신</button>
+          <span class="small" style="margin-left:auto">정렬: 아이템 레벨(내림차순)</span>
+        </div>
+        <div id="charGrid" class="grid"></div>
+      </section>
+
+      <!-- 공지 + 게시판 -->
+      <section class="card" id="noticeBoard">
+        <div style="display:grid;grid-template-columns:1fr;gap:14px">
+          <div class="notice" id="noticeArea"></div>
+          <div>
+            <div style="display:grid;gap:8px;margin-bottom:10px">
+              <input id="author" type="text" placeholder="작성자" />
+              <textarea id="content" rows="3" placeholder="내용 (Ctrl/⌘+Enter 전송)"></textarea>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <input id="pwd" type="password" placeholder="비밀번호 (삭제 시 필요)" />
+                <label class="small" style="display:flex;align-items:center;gap:6px"><input id="pwdToggle" type="checkbox"/> 비밀번호 표시</label>
+                <span class="small" style="margin-left:auto">글은 서버에 저장됩니다</span>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center"><button id="btnPost">등록</button></div>
+            </div>
+            <div id="posts" class="post-list"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 하단 배너 -->
+    <section class="card bottom-banner" id="bn-bottom"></section>
+  </div>
+
+  <!-- 상세 모달 -->
+  <div id="detailModal" class="modal" aria-modal="true" role="dialog">
+    <div class="panel">
+      <div class="left">
+        <button class="closeX" id="closeDetail" aria-label="닫기">✕</button>
+        <img id="dAvatar" alt="avatar" style="width:100%;border-radius:12px;object-fit:cover;aspect-ratio:1/1;background:#061016"/>
+        <div style="margin-top:10px">
+          <div style="font-weight:900;color:var(--gold)" id="dName">-</div>
+          <div class="small" id="dServer">-</div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <div class="chip">직업 <span id="dCls">-</span></div>
+            <div class="chip">아이템 레벨 <span id="dIlv">-</span></div>
+            <div class="chip">전투력 <span id="dCp">-</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="right">
+        <div style="font-weight:800;color:var(--gold);margin-bottom:6px">장비 옵션</div>
+        <div class="equip" id="dEquip"></div>
+        <div style="height:10px"></div>
+        <div style="font-weight:800;color:var(--gold);margin-bottom:6px">각인</div>
+        <div class="engr" id="dEngr"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========================= 관리자 설정 =========================
+    const ADMIN_CHARACTERS = ['장용노예2호','애이르','오바때끼','우니꼬쏠쏠','미드미네머너','달빛로드','신쿠fr','아장르카용나','데헌장파튀'].slice(0,20);
+
+    // 상/하/좌/우 배너(이미지 + 클릭 링크)
+    const ADMIN_BANNERS = {
+      top:    { img: 'https://jangstar00.github.io/yong/images/topbaner_tech.png',        link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
+      left:   { img: 'https://jangstar00.github.io/yong/images/leftbaner_tech.png',  link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
+      right:  { img: 'https://jangstar00.github.io/yong/images/rightbaner_tech.png', link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
+      bottom: { img: 'https://jangstar00.github.io/yong/images/topbaner_mj.png',link: 'https://kloa.gg/characters/%EC%95%A0%EC%9D%B4%EB%A5%B4' }
+    };
+
+    // 공지(코드로만 등록)
+    const ADMIN_NOTICE_TEXT = '카제로스 더퍼스트 가실 분 공대장: 김민지';
+
+    // API 베이스 (character, posts 공용)
+    const API_BASE = 'https://yong-qgw8.vercel.app/api';
+    const AUTO_MS = 60*60*1000; // 1시간
+
+    const $ = s=>document.querySelector(s);
+    const qs = s=>document.querySelectorAll(s);
+
+    // 배너 렌더
+    function loadBanners(){
+      const map = { top:'bn-top', bottom:'bn-bottom' };
+      for(const pos in map){
+        const cfg = ADMIN_BANNERS[pos];
+        const el = document.getElementById(map[pos]); if(!el) continue;
+        el.innerHTML = '';
+        if(cfg?.img){
+          const a = document.createElement('a');
+          a.href = cfg.link || '#'; a.target = '_blank'; a.rel = 'noopener';
+          const img = new Image(); img.src = cfg.img; img.alt = pos + ' 배너';
+          img.onerror = ()=>{ el.innerHTML = `<div class="small">${pos} 배너 로드 실패</div>`; };
+          a.appendChild(img); el.appendChild(a);
+        }else{ el.innerHTML = `<div class="small">${pos} 배너 미지정</div>`; }
+      }
+      createSideFloat('left', ADMIN_BANNERS.left);
+      createSideFloat('right', ADMIN_BANNERS.right);
+      const n = document.getElementById('noticeArea'); if(n) n.textContent = ADMIN_NOTICE_TEXT || '';
+    }
+
+    function createSideFloat(side, cfg){
+      let wrap = document.getElementById('float-'+side);
+      if(!wrap){ wrap = document.createElement('div'); wrap.id = 'float-'+side; wrap.className = 'side-float ' + side; document.body.appendChild(wrap); }
+      wrap.innerHTML = '';
+      if(cfg?.img){
+        const a = document.createElement('a'); a.href = cfg.link || '#'; a.target = '_blank'; a.rel = 'noopener';
+        const img = new Image(); img.src = cfg.img; img.alt = side + ' 배너';
+        img.onerror = ()=>{ wrap.innerHTML = `<div class="small">${side} 배너 로드 실패</div>`; };
+        a.appendChild(img); wrap.appendChild(a);
+      }
+    }
+
+    // 유틸
+    function setStatus(t){ $('#status').textContent = t }
+    function parseItemLevel(raw){ if(!raw) return 0; const num = parseFloat(String(raw).replace(/[^0-9.]/g,'')); return isNaN(num)?0:num; }
+    function esc(s){ return String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+    function escNl(s){ return esc(s).replace(/\n/g,'<br>'); }
+
+    // 캐릭터 API
+    async function fetchChar(name){
+      const ctl = new AbortController(); const to=setTimeout(()=>ctl.abort(), 10000);
+      try{
+        const res = await fetch(`${API_BASE}/character?name=${encodeURIComponent(name)}`, { signal: ctl.signal });
+        clearTimeout(to);
+        if(!res.ok) throw new Error(`API ${res.status}`);
+        const raw = await res.json();
+        return mapArmory(raw);
+      }catch(err){ console.warn(`[fetchChar] ${name}:`, err); return mockChar(name); }
+    }
+
+    function mapArmory(raw){
+      const p = raw?.ArmoryProfile || {};
+      const equips = raw?.ArmoryEquipment || [];
+      const engrs = (raw?.ArmoryEngraving?.Engravings||[]).map(e=>`${e.Name} ${e.Level? 'Lv.'+e.Level: ''}`);
+
+      // 전투력/직업
+      const stats = p?.Stats || raw?.ArmoryProfile?.Stats || [];
+      const combat = (()=>{
+        try{
+          const c = stats.find(s=> (s.Type||s.Name||'').includes('전투력') || (s.Type||s.Name||'').toLowerCase().includes('combat'));
+          return c?.Value || c?.value || '-';
+        }catch(_){ return '-'; }
+      })();
+
+      return {
+        name: p.CharacterName||'-',
+        server: p.ServerName||'-',
+        cls: p.CharacterClassName||'-',
+        avatar: p.CharacterImage||'',
+        itemLevelText: p.ItemMaxLevel||'-',
+        itemLevelNum: parseItemLevel(p.ItemMaxLevel),
+        combatPower: combat,
+        equipment: equips.map(x=>({ name:x.Name, grade:x.Grade||'', icon:x.Icon||'', tooltip:x.Tooltip||'' })),
+        engraves: engrs,
+      };
+    }
+
+    function mockChar(name){
+      const ilv = 1500 + Math.floor(Math.random()*300);
+      return { name, server:'아만', cls:'버서커', avatar:'https://images.unsplash.com/photo-1602524819170-51aeb0f3f9f4?q=80&w=600&auto=format&fit=crop', itemLevelText: ilv.toFixed(2), itemLevelNum: ilv, combatPower: (100000 + Math.floor(Math.random()*50000)).toLocaleString(), equipment:[{icon:'https://via.placeholder.com/42',grade:'유물',tooltip:''}], engraves:['원한 Lv.3','예리한 둔기 Lv.3'] };
+    }
+
+    // 그리드 렌더
+    function renderSkeleton(){
+      $('#charGrid').innerHTML = ADMIN_CHARACTERS.map(()=>`
+        <div class="card-char"><div class="skeleton" style="width:100%;aspect-ratio:1/1;border-radius:12px"></div><div class="skeleton" style="height:16px;border-radius:8px;margin-top:8px"></div><div class="skeleton" style="height:12px;border-radius:6px;margin-top:6px;opacity:.6"></div></div>`).join('');
+    }
+    function renderGrid(list){
+      const wrap = $('#charGrid');
+      wrap.innerHTML = list.map((it,idx)=>{
+        const avatar = it.avatar || 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23061016"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%239aa6b2" font-size="16">NO IMAGE</text></svg>`);
+        return `
+          <div class="card-char" data-idx="${idx}">
+            <img src="${avatar}" alt="${esc(it.name)} 아바타">
+            <div class="name">${esc(it.name)}</div>
+            <div class="meta">서버: ${esc(it.server)}</div>
+            <div class="meta">직업: ${esc(it.cls||'-')}</div>
+            <div class="row"><span class="small">아이템 레벨</span><strong>${esc(it.itemLevelText)}</strong></div>
+            <div class="row"><span class="small">전투력</span><strong>${esc(it.combatPower)}</strong></div>
+          </div>`;
+      }).join('');
+      wrap.querySelectorAll('.card-char').forEach(el=>{
+        el.addEventListener('click',()=>{
+          const idx = +el.getAttribute('data-idx');
+          openDetail(list[idx]);
+        });
+      });
+      setStatus(`표시: ${list.length}개 · 정렬: 아이템 레벨`);
+    }
+
+    // 상세 모달: 아이콘 + 옵션요약
+    function openDetail(d){
+      $('#dAvatar').src = d.avatar || '';
+      $('#dName').textContent = d.name; $('#dServer').textContent = '서버: '+d.server; $('#dCls').textContent=d.cls||'-'; $('#dIlv').textContent = d.itemLevelText; $('#dCp').textContent = d.combatPower;
+      const eq = d.equipment||[]; const eqWrap = $('#dEquip'); eqWrap.innerHTML='';
+      if(eq.length===0){ eqWrap.innerHTML = '<div class="small">장비 정보 없음</div>'; }
+      else {
+        eq.forEach(e=>{
+          const div=document.createElement('div'); div.className='item';
+          const icon = e.icon? `<img src="${e.icon}" alt="" style="width:42px;height:42px;border-radius:8px;object-fit:cover">` : '';
+          // 옵션 파싱
+          let opts=[]; try{
+            const t=(e.tooltip||'');
+            const json = JSON.parse(t.replace(/\\"/g,'"'));
+            const rawLines=[]; for(const k in json){ const v=json[k]?.value; const pick=(v?.Element_000?.contentStr||v?.Element_001?.contentStr||v?.Element_000||v?.leftStr||v?.rightStr||v||'')+''; if(pick) rawLines.push(pick); }
+            opts = rawLines.map(s=>String(s).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim()).filter(x=>/\d/.test(x));
+          }catch{}
+          if(!opts.length) opts=['옵션 정보 없음'];
+          div.innerHTML = `<div style="display:flex;align-items:center;gap:10px">${icon}<div><div class="small">${e.grade||''}</div><div class="small">${opts.slice(0,4).join(' · ')}</div></div></div>`;
+          eqWrap.appendChild(div);
+        });
+      }
+      const en = d.engraves||[]; const enWrap=$('#dEngr'); enWrap.innerHTML='';
+      if(en.length===0){ enWrap.innerHTML='<span class="small">각인 정보 없음</span>'; }
+      else { en.forEach(s=>{ const sp=document.createElement('span'); sp.className='chip'; sp.textContent=s; enWrap.appendChild(sp); }); }
+      $('#detailModal').classList.add('on');
+    }
+
+    // 데이터 갱신
+    async function refreshAll(){
+      try{
+        setStatus('전체 불러오는 중...');
+        renderSkeleton();
+        const results = await Promise.allSettled(ADMIN_CHARACTERS.map(n=>fetchChar(n)));
+        let list = results.map((r,i)=> r.status==='fulfilled'? r.value : mockChar(ADMIN_CHARACTERS[i]));
+        list = list.sort((a,b)=> b.itemLevelNum - a.itemLevelNum);
+        renderGrid(list);
+        localStorage.setItem('gridCache', JSON.stringify(list));
+      }catch(err){
+        const list = ADMIN_CHARACTERS.map(n=>mockChar(n)).sort((a,b)=> b.itemLevelNum - a.itemLevelNum);
+        renderGrid(list);
+      }
+    }
+
+    function bootChars(){
+      const cache = localStorage.getItem('gridCache'); if(cache){ try{ renderGrid(JSON.parse(cache)); }catch(_){} }
+      refreshAll();
+      $('#refreshAll').addEventListener('click', refreshAll);
+      setInterval(refreshAll, AUTO_MS);
+    }
+
+    // 게시판(서버 저장)
+    async function hashPwd(p){ if(!window.crypto?.subtle) return p; const enc=new TextEncoder().encode(p); const buf=await crypto.subtle.digest('SHA-256',enc); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+
+    async function loadPosts(){
+      try{ const r = await fetch(`${API_BASE}/posts`); if(!r.ok) throw new Error('POSTS '+r.status); const arr = await r.json(); renderPosts(arr); }
+      catch(e){ $('#posts').innerHTML = `<div class="small">게시글 불러오기 실패: ${e.message}</div>`; }
+    }
+
+    function renderPosts(arr){
+      const wrap = $('#posts'); wrap.innerHTML='';
+      arr.slice().reverse().forEach(p=>{
+        const el=document.createElement('div'); el.className='post';
+        el.innerHTML = `<header><strong>${esc(p.author||'익명')}</strong><span class="meta">${new Date(p.ts).toLocaleString()}</span></header><div style="margin-top:8px">${escNl(p.content||'')}</div><div style="margin-top:10px;text-align:right"><button class="danger small" data-id="${p.id}">삭제</button></div>`;
+        wrap.appendChild(el);
+      });
+      wrap.querySelectorAll('button[data-id]').forEach(btn=>{
+        btn.addEventListener('click', async (e)=>{
+          const id = e.currentTarget.getAttribute('data-id');
+          const input = prompt('이 글의 비밀번호를 입력하세요'); if(input==null) return;
+          const pwdHash = await hashPwd(input);
+          const r = await fetch(`${API_BASE}/posts`, { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, pwdHash })});
+          if(!r.ok){ alert('삭제 실패: '+(await r.text())); return; }
+          loadPosts();
+        });
+      });
+    }
+
+    async function addPost(){
+      const author = $('#author').value.trim();
+      const content = $('#content').value.trim();
+      const pwd = $('#pwd').value;
+      if(!content){ alert('내용을 입력하세요'); return; }
+      if(!pwd){ alert('비밀번호를 입력하세요'); return; }
+      const pwdHash = await hashPwd(pwd);
+      const r = await fetch(`${API_BASE}/posts`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ author, content, pwdHash })});
+      if(!r.ok){ alert('등록 실패: '+(await r.text())); return; }
+      $('#author').value=''; $('#content').value=''; $('#pwd').value='';
+      loadPosts();
+    }
+
+    function bootBoard(){
+      $('#btnPost').addEventListener('click', addPost);
+      const c = $('#content'); c.addEventListener('keydown', e=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)){ e.preventDefault(); addPost(); }});
+      const t = $('#pwdToggle'), p = $('#pwd'); if(t&&p) t.addEventListener('change',()=> p.type = t.checked? 'text':'password');
+      loadPosts();
+    }
+
+    // 초기화
+    document.addEventListener('DOMContentLoaded',()=>{
+      loadBanners(); bootChars(); bootBoard();
+      $('#closeDetail').addEventListener('click',()=> $('#detailModal').classList.remove('on'));
+      $('#detailModal').addEventListener('click',(e)=>{ if(e.target.id==='detailModal') $('#detailModal').classList.remove('on'); });
+    });
+  </script>
+</body>
+</html>
