@@ -1,245 +1,179 @@
 // /api/character.js
-// Vercel: Edge/Node 둘 다 동작. 환경변수 LOSTARK_API_KEY 사용(있으면).
-export const config = { runtime: 'edge' };
+// Next.js (Vercel) API Route
+// Lost Ark Open API 프록시 + 통합 응답 + CORS 완전개방
 
-const API_KEY = process.env.LOSTARK_API_KEY || '';
-const ARM = 'https://developer-lostark.game.onstove.com/armories/characters';
+const LA_HOST = 'https://developer-lostark.game.onstove.com';
+const UA = 'lostamen-proxy/1.0';
 
-async function getJSON(url) {
-  const headers = API_KEY ? { Authorization: `bearer ${API_KEY}` } : {};
-  const r = await fetch(url, { headers, cache: 'no-store' });
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
-}
-async function tryJSON(url) {
-  try { return await getJSON(url); } catch { return null; }
-}
-
-// 공식 모바일 페이지(HTML)에서 전투력/아바타 보강
-async function fetchOfficialHTML(name) {
-  const url = 'https://m-lostark.game.onstove.com/Profile/Character/' + encodeURIComponent(name);
-  const r = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0',
-      'Accept-Language': 'ko-KR,ko;q=0.9'
-    },
-    cache: 'no-store'
-  });
-  if (!r.ok) throw new Error(`OFFICIAL ${r.status}`);
-  return r.text();
-}
-function parseOfficial(html) {
-  const s = html.replace(/\s+/g, ' ');
-  const combatPower = ((s.match(/전투력[^0-9]*([0-9][0-9.,]*)/i) || [])[1]) || null;
-  const avatar = ((s.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i) || [])[1]) || null;
-  return { combatPower, avatar };
+function cors(res) {
+  res.setHeader('Access-Control-Allow-Origin', '*'); // 필요하면 도메인으로 좁혀라
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Vary', 'Origin');
+  // 캐싱은 프론트가 알아서. 여긴 항상 최신이 낫다.
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
 }
 
-// tooltip 평탄화
-function flattenTooltip(raw) {
-  if (!raw) return '';
-  let j = raw;
-  if (typeof raw === 'string') {
-    try { j = JSON.parse(raw.replace(/\\"/g, '"')); } catch { return ''; }
-  }
-  if (typeof j !== 'object' || !j) return '';
-  const pick = [];
-  for (const k in j) {
-    const v = j[k] && j[k].value;
-    pick.push(
-      (v && v.Element_000 && v.Element_000.contentStr) ||
-      (v && v.Element_001 && v.Element_001.contentStr) ||
-      (v && v.Element_002 && v.Element_002.contentStr) ||
-      (v && v.Element_000) || (v && v.leftStr) || (v && v.rightStr) ||
-      (typeof v === 'string' ? v : '') || ''
-    );
-  }
-  return pick.filter(Boolean).join('\n');
-}
-const stripTags = s => String(s || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-function extractAffixOptions(raw) {
-  return flattenTooltip(raw)
-    .split(/\n|<br>|<BR>/i)
-    .map(x => x.replace(/&nbsp;/g, ' ').trim())
-    .filter(Boolean)
-    .map(stripTags)
-    .filter(x => /^(상|중|하)\b/.test(x));
-}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// 강화/상재/단계/티어/엘릭서/초월 파싱
-function parseEquipMeta(name, grade, tooltipRaw) {
-  const t = (flattenTooltip(tooltipRaw) + ' ' + (name || '') + ' ' + (grade || '')).replace(/\s+/g, ' ');
-  const getNum = (re) => { const m = re.exec(t); return m ? Number(m[1]) : null; };
-  const enhance = getNum(/\+ *(\d{1,2})/);
-  const upper   = getNum(/x *(\d{1,2})/i);
-  const step    = getNum(/(\d{1,2})\s*단계/);
-  const tierN   = getNum(/티어\s*([0-9])/i);
-  const tier    = tierN ? `T${tierN}` : null;
-
-  // 초월 표기 예) "초월 Lv.7×21" 혹은 "초월 7단계 누적 21"
-  const trans = (() => {
-    let avg = null, total = null;
-    const a = t.match(/초월[^L]*Lv\.?\s*([0-9]{1,2})\D*×\D*([0-9]{1,3})/i);
-    if (a) { avg = Number(a[1]); total = Number(a[2]); }
-    const b = t.match(/초월[^0-9]*([0-9]{1,2})\s*단계[^0-9]*([0-9]{1,3})/);
-    if (!a && b) { avg = Number(b[1]); total = Number(b[2]); }
-    if (avg || total) return { avg: avg || null, total: total || null };
-    return null;
-  })();
-
-  // 엘릭서 예) "엘릭서 22.84%" / "엘릭서 Lv.??"
-  const elixir = (() => {
-    const m = t.match(/엘릭서[^0-9]*([0-9]{1,3}(?:\.[0-9]+)?)%/);
-    if (m) return { percent: Number(m[1]) };
-    const m2 = t.match(/엘릭서[^L]*Lv\.?\s*([0-9]{1,2})/i);
-    if (m2) return { level: Number(m2[1]) };
-    return null;
-  })();
-
-  return { enhance, upper, step, tier, transcend: trans, elixir };
-}
-
-function gradeClass(grade) {
-  const g = String(grade || '');
-  if (/고대/.test(g)) return 'ancient';
-  if (/유물/.test(g)) return 'relic';
-  if (/전설/.test(g)) return 'legendary';
-  if (/영웅/.test(g)) return 'epic';
-  if (/희귀/.test(g)) return 'rare';
-  if (/고급/.test(g)) return 'uncommon';
-  return 'common';
-}
-
-function pickCombatPower(stats) {
-  const arr = Array.isArray(stats) ? stats : [];
-  const f = kw => arr.find(s => String(s?.Type || s?.Name || '').includes(kw))?.Value || null;
-  return f('전투력') || f('Combat Power') || null;
-}
-
-// 보석 요약
-function summarizeGems(gemsObj) {
-  const list = (gemsObj && (gemsObj.Gems || gemsObj.gems || [])) || [];
-  if (!Array.isArray(list) || !list.length) return { avgLevel: null, counts: {}, list: [] };
-  let sum = 0;
-  const counts = {};
-  const out = list.map(g => {
-    const lv = Number(g.Level || g.level || 0);
-    const name = g.Name || g.name || '';
-    const typeKey = /치명타|피해|공격/.test(name) ? 'damage' : /쿨|재사용/.test(name) ? 'cooldown' : 'other';
-    counts[typeKey] = (counts[typeKey] || 0) + 1;
-    sum += lv;
-    return { level: lv, name, icon: g.Icon || g.icon || '' };
-  });
-  return { avgLevel: Math.round((sum / list.length) * 100) / 100, counts, list: out };
-}
-
-// 카드 요약
-function summarizeCards(cardsObj) {
-  const list = (cardsObj && (cardsObj.Cards || cardsObj.cards || [])) || [];
-  const effects = (cardsObj && (cardsObj.Effects || cardsObj.effects || [])) || [];
-  let setName = null, setCount = null, awakeningTotal = 0;
-  for (const c of list) awakeningTotal += Number(c.AwakeCount || c.awakening || 0);
-  // 효과 설명에서 세트/조건 추출 시도
-  if (effects.length) {
-    const txt = effects.map(e => (e.Items || e.items || []).map(i => i.Description || i.description || '').join('\n')).join('\n');
-    const m = txt.match(/(\S+)\s*세트\s*([0-9]+)\s*세트/i);
-    if (m) { setName = m[1]; setCount = Number(m[2]); }
-  }
-  return {
-    list: list.map(c => ({ name: c.Name || c.name || '', icon: c.Icon || c.icon || '', awakening: c.AwakeCount || c.awakening || 0 })),
-    setName, setCount, awakeningTotal
-  };
-}
-
-function normalize(profile, equipment, engr, gems, cards) {
-  const p = profile || {};
-  const eq = Array.isArray(equipment) ? equipment : [];
-  const engrs = (engr && Array.isArray(engr.Engravings)) ? engr.Engravings : [];
-  return {
-    name: p.CharacterName || '-',
-    server: p.ServerName || '-',
-    cls: p.CharacterClassName || '-',
-    avatar: p.CharacterImage || '',
-    itemLevelText: p.ItemMaxLevel || p.ItemAvgLevel || p.ItemLevel || '-',
-    stats: Array.isArray(p.Stats) ? p.Stats : [],
-    equipment: eq.map(x => ({
-      slot: x.Type || x.Slot || '',
-      name: x.Name || '',
-      grade: x.Grade || '',
-      icon: x.Icon || '',
-      quality: typeof x.Quality === 'number' ? x.Quality : null,
-      tooltip: x.Tooltip || ''
-    })),
-    engraves: engrs.map(e => (e.Name ? `${e.Name}${e.Level ? ' Lv.' + e.Level : ''}` : '')).filter(Boolean),
-    gems: gems || null,
-    cards: cards || null
-  };
-}
-
-export default async function handler(req) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const name = searchParams.get('name');
-    if (!name) return new Response('name required', { status: 400 });
-
-    // 병렬 호출
-    const [profile, equipment, engr, gems, cards] = await Promise.all([
-      tryJSON(`${ARM}/${encodeURIComponent(name)}/profiles`),
-      tryJSON(`${ARM}/${encodeURIComponent(name)}/equipment`),
-      tryJSON(`${ARM}/${encodeURIComponent(name)}/engravings`),
-      tryJSON(`${ARM}/${encodeURIComponent(name)}/gems`),
-      tryJSON(`${ARM}/${encodeURIComponent(name)}/cards`)
-    ]);
-
-    let data = normalize(profile, equipment, engr, gems, cards);
-
-    // 장비 메타/부옵 파싱
-    data.equipment = (data.equipment || []).map(it => {
-      const lines = extractAffixOptions(it.tooltip);
-      return {
-        ...it,
-        gradeClass: gradeClass(it.grade),
-        lines,
-        meta: parseEquipMeta(it.name, it.grade, it.tooltip)
-      };
-    });
-
-    // 보석/카드 요약
-    const gemSum = summarizeGems(gems || {});
-    const cardSum = summarizeCards(cards || {});
-
-    // 전투력
-    let combatPower = pickCombatPower(data.stats);
-    if (!combatPower) {
-      try {
-        const html = await fetchOfficialHTML(name);
-        const { combatPower: cpOff, avatar: avOff } = parseOfficial(html);
-        if (cpOff) combatPower = cpOff;
-        if (!data.avatar && avOff) data.avatar = avOff;
-      } catch { /* ignore */ }
+async function fetchJson(url, token, retries = 2, timeoutMs = 10000) {
+  for (let i = 0; i <= retries; i++) {
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), timeoutMs);
+    try {
+      const r = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'User-Agent': UA,
+          Accept: 'application/json',
+        },
+        signal: ac.signal,
+      });
+      clearTimeout(t);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return await r.json();
+    } catch (err) {
+      if (i === retries) throw err;
+      await sleep(400 * Math.pow(2, i));
     }
+  }
+}
 
-    const out = {
-      name: data.name,
-      server: data.server,
-      cls: data.cls,
-      avatar: data.avatar,
-      itemLevelText: data.itemLevelText,
-      stats: data.stats,
-      combatPower: combatPower || null,
-      engraves: data.engraves,
-      equipment: data.equipment,
-      gems: gemSum,
-      cards: cardSum
+function parseItemLevelText(p) {
+  return (
+    p?.ItemMaxLevel ||
+    p?.ItemAvgLevel ||
+    p?.ItemLevel ||
+    p?.['Item Max Level'] ||
+    p?.['Item Avg Level'] ||
+    p?.['Item Level'] ||
+    '-'
+  );
+}
+
+function toEquip(e) {
+  if (!e) return null;
+  return {
+    type: e.Type || e.Slot || '',
+    name: e.Name || '',
+    grade: e.Grade || '',
+    icon: e.Icon || '',
+    quality: typeof e.Quality === 'number' ? e.Quality : null,
+    tooltip: e.Tooltip || '',
+  };
+}
+
+export default async function handler(req, res) {
+  cors(res);
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  try {
+    const token = process.env.LOSTARK_API_KEY;
+    if (!token) return res.status(500).json({ ok: false, error: 'NO_TOKEN' });
+
+    const name = String(req.query.name || '').trim();
+    if (!name) return res.status(400).json({ ok: false, error: 'NO_NAME' });
+
+    const enc = encodeURIComponent(name);
+
+    const urls = {
+      profile:   `${LA_HOST}/armories/characters/${enc}/profiles`,
+      equipment: `${LA_HOST}/armories/characters/${enc}/equipment`,
+      engraves:  `${LA_HOST}/armories/characters/${enc}/engravings`,
+      gems:      `${LA_HOST}/armories/characters/${enc}/gems`,
+      cards:     `${LA_HOST}/armories/characters/${enc}/cards`,
+      // 필요하면 더 추가
     };
 
-    return new Response(JSON.stringify(out), {
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+    // 병렬 but 온건하게
+    const [profile, equipment, engraves, gems, cards] = await Promise.all([
+      fetchJson(urls.profile, token).catch(() => null),
+      fetchJson(urls.equipment, token).catch(() => []),
+      fetchJson(urls.engrav es, token).catch(() => null),
+      fetchJson(urls.gems, token).catch(() => null),
+      fetchJson(urls.cards, token).catch(() => null),
+    ]);
+
+    // 통합 매핑
+    const p = profile || {};
+    const armoryEngr = (engraves && engraves.Engravings) ? engraves.Engravings : (engraves || []);
+    const engrList = Array.isArray(armoryEngr)
+      ? armoryEngr.map(e => (e?.Name || '') + (e?.Level ? ` Lv.${e.Level}` : '')).filter(Boolean)
+      : [];
+
+    const equipArr = Array.isArray(equipment) ? equipment.map(toEquip).filter(Boolean) : [];
+
+    // 전투력은 스탯에서 훔치거나 없음 처리
+    const stats = Array.isArray(p.Stats) ? p.Stats : [];
+    const combatStat =
+      stats.find(s => String(s.Type || s.Name || '').includes('전투력')) ||
+      stats.find(s => String(s.Type || s.Name || '').toLowerCase().includes('combat'));
+    const combatPower = combatStat ? (combatStat.Value || combatStat.value) : null;
+
+    // 카드 요약
+    let cardsOut = null;
+    if (cards && (cards.Cards || cards.Effects)) {
+      const list = (cards.Cards || []).map(c => ({
+        name: c?.Name || '',
+        icon: c?.Icon || '',
+        awakening: c?.AwakeCount || 0,
+      }));
+      let setName = '';
+      let setCount = 0;
+      if (Array.isArray(cards.Effects) && cards.Effects.length) {
+        const eff = cards.Effects[0];
+        setName = eff?.Title || '';
+        setCount = Array.isArray(eff?.Items) ? eff.Items.length : 0;
+      }
+      const awakeningTotal = list.reduce((a, c) => a + (c.awakening || 0), 0);
+      cardsOut = { list, setName, setCount, awakeningTotal };
+    }
+
+    // 보석 요약
+    let gemsOut = null;
+    if (gems && Array.isArray(gems.Gems)) {
+      const lv = gems.Gems.map(g => g.Level || 0);
+      const avg = lv.length ? (lv.reduce((a, b) => a + b, 0) / lv.length).toFixed(1) : null;
+      const counts = {
+        damage: (gems.Gems || []).filter(g => /멸화|Damage/i.test(g.Name || '')).length,
+        cooldown: (gems.Gems || []).filter(g => /홍염|Cooldown/i.test(g.Name || '')).length,
+      };
+      gemsOut = { avgLevel: avg ? Number(avg) : null, counts };
+    }
+
+    const data = {
+      name: p.CharacterName || name,
+      server: p.ServerName || p.Server || '-',
+      cls: p.CharacterClassName || p.ClassName || '-',
+      avatar: p.CharacterImage || '',
+      itemLevelText: parseItemLevelText(p),
+      stats: p.Stats || [],
+      combatPower: combatPower || null,
+      equipment: equipArr,
+      engraves: engrList,
+      gems: gemsOut,
+      cards: cardsOut,
+    };
+
+    return res.status(200).json({
+      ok: true,
+      requestedName: name,
+      normalizedName: p.CharacterName || name,
+      sources: urls,
+      status: {
+        profile: profile ? 200 : 204,
+        equipment: Array.isArray(equipment) ? 200 : 204,
+        engraves: engraves ? 200 : 204,
+        gems: gems ? 200 : 204,
+        cards: cards ? 200 : 204,
+      },
+      data,
     });
-  } catch (e) {
-    return new Response(JSON.stringify({ ok: false, error: String(e.message || e) }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
+  } catch (err) {
+    // 에러도 CORS 살려서 리턴
+    return res.status(500).json({
+      ok: false,
+      error: String(err && err.message || err),
     });
   }
 }
