@@ -1,58 +1,124 @@
-// api/character.js
-export default async function handler(req, res) {
-  // ===== CORS: 동적 화이트리스트 =====
-  const ORIGIN = req.headers.origin || '';
-  const ALLOWLIST = [
-    'https://jangstar00.github.io',     // GitHub Pages
-    'https://yong-qgw8.vercel.app',     // 본 배포
-    'http://localhost:3000',            // 로컬 테스트
-    'http://127.0.0.1:3000'
-  ];
-  if (ALLOWLIST.includes(ORIGIN)) {
-    res.setHeader('Access-Control-Allow-Origin', ORIGIN);
-  } else {
-    // 안전하게 기본 허용 (원한다면 '*'로도 가능)
-    res.setHeader('Access-Control-Allow-Origin', 'https://jangstar00.github.io');
-  }
-  res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Max-Age', '600');
+// /api/character.js
+// Lost Ark 캐릭터 정보를 한 번에 모아주는 프록시.
+// - name: 캐릭터명 (필수)
+// - debug=1: 원본 응답 동봉
+// - plain=1: 이전 UI 호환(매핑 결과만 반환)
 
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end(); // 프리플라이트
-  }
+export default async function handler(req, res) {
+  // CORS (GitHub Pages 호출 허용)
+  res.setHeader("Access-Control-Allow-Origin", "https://jangstar00.github.io");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") return res.status(200).end();
 
   try {
-    const name = (req.query?.name || '').trim();
+    const { name: rawName, debug, plain } = req.query;
     const API_KEY = process.env.LOSTARK_API_KEY;
 
-    if (!name) return res.status(400).json({ error: 'name 쿼리 필요' });
-    if (!API_KEY) return res.status(500).json({ error: 'LOSTARK_API_KEY 누락' });
-
-    // ===== Lost Ark API: 필요한 섹션만 필터로 보장
-    // 프런트는 ArmoryProfile/ArmoryEquipment/ArmoryEngraving/Stats를 기대함
-    const base = 'https://developer-lostark.game.onstove.com';
-    const url  = `${base}/armories/characters/${encodeURIComponent(name)}?filters=profiles,equipment,engravings,stats`;
-
-    const apiRes = await fetch(url, {
-      headers: { Authorization: `Bearer ${API_KEY}` }
-    });
-
-    const text = await apiRes.text();
-    // 일부 케이스에서 JSON 아니라 text로 올 수도 있어 안전 파싱
-    let data;
-    try { data = JSON.parse(text); } catch { data = text; }
-
-    // 캐시(짧게) – 선택
-    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
-
-    if (!apiRes.ok) {
-      return res.status(apiRes.status).json({ error: 'LoA API 오류', detail: data });
+    // 1) 파라미터·키 검증
+    if (!rawName || String(rawName).trim() === "") {
+      return res.status(400).json({ ok: false, error: "name 쿼리 필요" });
+    }
+    if (!API_KEY) {
+      return res.status(500).json({ ok: false, error: "서버에 LOSTARK_API_KEY 없음" });
     }
 
-    return res.status(200).json(data);
+    // 2) 인코딩 일관화
+    const name = decodeURIComponent(String(rawName)).trim();
+    const encName = encodeURIComponent(name);
+
+    // 3) 공통 fetch 유틸
+    const base = "https://developer-lostark.game.onstove.com";
+    const headers = {
+      Authorization: `bearer ${API_KEY}`,
+      Accept: "application/json",
+    };
+    const fetchJSON = async (path) => {
+      const url = `${base}${path}`;
+      const r = await fetch(url, { headers });
+      // 일부 엔드포인트가 200이면서 빈 배열/객체 주기도 함
+      if (r.status === 404 || r.status === 204) return { status: r.status, data: null, url };
+      const text = await r.text();
+      try {
+        const json = text ? JSON.parse(text) : null;
+        return { status: r.status, data: json, url };
+      } catch {
+        return { status: r.status, data: null, url, parseError: true, body: text };
+      }
+    };
+
+    // 4) 병렬 호출
+    const [profile, equips, engraves] = await Promise.all([
+      fetchJSON(`/armories/characters/${encName}/profiles`),
+      fetchJSON(`/armories/characters/${encName}/equipment`),
+      fetchJSON(`/armories/characters/${encName}/engravings`),
+    ]);
+
+    // 5) 비정상 상황 빠르게 표기
+    const gotAny =
+      (profile && profile.data) ||
+      (equips && Array.isArray(equips.data) && equips.data.length) ||
+      (engraves && engraves.data && engraves.data.Effects && engraves.data.Effects.length);
+
+    // 6) 매핑
+    const mapped = {
+      name: profile?.data?.CharacterName ?? "--",
+      server: profile?.data?.ServerName ?? "--",
+      cls: profile?.data?.CharacterClassName ?? "--",
+      avatar: profile?.data?.CharacterImage ?? "",
+      itemLevelText: profile?.data?.ItemAvgLevel ?? "--",
+      itemLevelNum: Number(
+        (profile?.data?.ItemMaxLevel ?? profile?.data?.ItemAvgLevel ?? "0").replace(/,/g, "")
+      ) || 0,
+      combatPower: profile?.data?.Stats?.find?.(s => s.Type === "공격력")?.Value ?? "--",
+      equipment: Array.isArray(equips?.data)
+        ? equips.data.map(e => ({
+            type: e.Type || "",
+            name: e.Name || "",
+            grade: e.Grade || "",
+          }))
+        : [],
+      engraves:
+        engraves?.data?.Effects?.map?.(e => ({
+          name: e.Name || "",
+          desc: e.Description || "",
+        })) ?? [],
+    };
+
+    // 7) plain 모드면 예전 UI 그대로
+    if (String(plain) === "1") {
+      return res.status(200).json(mapped);
+    }
+
+    // 8) 디버그 포함 모드
+    const payload = {
+      ok: !!gotAny,
+      requestedName: rawName,
+      normalizedName: name,
+      sources: {
+        profile: profile?.url,
+        equipment: equips?.url,
+        engraves: engraves?.url,
+      },
+      status: {
+        profile: profile?.status ?? null,
+        equipment: equips?.status ?? null,
+        engraves: engraves?.status ?? null,
+      },
+      data: mapped,
+    };
+
+    if (String(debug) === "1") {
+      payload.raw = {
+        profile: profile?.data ?? null,
+        equipment: equips?.data ?? null,
+        engraves: engraves?.data ?? null,
+      };
+    }
+
+    // 데이터가 진짜 하나도 없으면 그래도 200에 ok=false로 내려서 프론트가 안내문 띄우기 쉽게 함
+    return res.status(200).json(payload);
   } catch (err) {
-    return res.status(500).json({ error: '프록시 에러', detail: String(err?.message || err) });
+    return res.status(500).json({ ok: false, error: String(err?.message || err) });
   }
 }
