@@ -59,7 +59,7 @@
     .post .meta{font-size:12px;color:var(--muted)}
     .danger{border-color:rgba(255,0,0,.25);color:#ffb3b3}
 
-    /* 상세 모달 (모바일 최적화) */
+    /* 상세 모달 */
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:9999}
     .modal.on{display:flex}
     .panel{max-width:960px;width:100%;background:#0e141c;border:1px solid rgba(255,255,255,.08);border-radius:16px;display:grid;grid-template-columns:320px 1fr;max-height:90vh;overflow:auto}
@@ -71,6 +71,14 @@
     .engr{display:flex;gap:6px;flex-wrap:wrap}
     .chip{background:linear-gradient(90deg, rgba(212,175,55,.16), transparent);padding:3px 8px;border-radius:999px;color:var(--gold);font-weight:800;font-size:12px}
 
+    /* 옵션 라인(부여 옵션) */
+    .opt-lines{display:grid;gap:6px}
+    .opt-line{display:flex;gap:8px;align-items:flex-start}
+    .tag{display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800}
+    .tag.blue{background:rgba(77,171,245,.18);color:#81c9ff}
+    .tag.purple{background:rgba(162,128,255,.18);color:#c7b5ff}
+    .tag.orange{background:rgba(255,173,80,.18);color:#ffd29a}
+
     /* 스켈레톤 */
     .skeleton{position:relative;overflow:hidden;background:linear-gradient(90deg, rgba(255,255,255,.06), transparent)}
     .skeleton::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);animation:shimmer 1.4s infinite}
@@ -79,7 +87,11 @@
     /* 반응형 */
     @media (max-width:1100px){ .grid{grid-template-columns:repeat(3,1fr)} .panel{grid-template-columns:1fr} .panel .left{border-right:0;border-bottom:1px solid rgba(255,255,255,.06)} }
     @media (max-width:760px){ .grid{grid-template-columns:repeat(2,1fr)} .card{padding:12px} .name{font-size:15px} }
-    @media (max-width:520px){ .grid{grid-template-columns:1fr} .top-banner,.bottom-banner{min-height:80px} .controls{gap:6px} button{padding:8px 12px} }
+    @media (max-width:720px){ .grid{grid-template-columns:1fr} }
+    @media (max-width:600px){
+      .card-char img{display:none}        /* 모바일 간략 카드: 이미지 숨김 */
+      .top-banner,.bottom-banner{min-height:80px}
+    }
   </style>
 </head>
 <body>
@@ -92,7 +104,7 @@
       <div style="margin-left:auto" class="small" id="status">준비됨 · 1시간 자동 갱신</div>
     </header>
 
-    <!-- 상단 배너 (문구 없음) -->
+    <!-- 상단 배너 -->
     <section class="card top-banner" id="bn-top"></section>
 
     <div class="main">
@@ -147,7 +159,7 @@
         </div>
       </div>
       <div class="right">
-        <div style="font-weight:800;color:var(--gold);margin-bottom:6px">장비 옵션</div>
+        <div style="font-weight:800;color:var(--gold);margin-bottom:6px">장비 옵션 (부여 옵션)</div>
         <div class="equip" id="dEquip"></div>
         <div style="height:10px"></div>
         <div style="font-weight:800;color:var(--gold);margin-bottom:6px">각인</div>
@@ -162,10 +174,10 @@
 
     // 상/하/좌/우 배너(이미지 + 클릭 링크)
     const ADMIN_BANNERS = {
-      top:    { img: 'https://jangstar00.github.io/yong/images/topbaner_tech.png',        link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
+      top:    { img: 'https://jangstar00.github.io/yong/images/topbaner_tech.png',   link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
       left:   { img: 'https://jangstar00.github.io/yong/images/leftbaner_tech.png',  link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
       right:  { img: 'https://jangstar00.github.io/yong/images/rightbaner_tech.png', link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
-      bottom: { img: 'https://jangstar00.github.io/yong/images/topbaner_mj.png',link: 'https://kloa.gg/characters/%EC%95%A0%EC%9D%B4%EB%A5%B4' }
+      bottom: { img: 'https://jangstar00.github.io/yong/images/topbaner_mj.png',     link: 'https://kloa.gg/characters/%EC%95%A0%EC%9D%B4%EB%A5%B4' }
     };
 
     // 공지(코드로만 등록)
@@ -178,8 +190,9 @@
     const $ = s=>document.querySelector(s);
     const qs = s=>document.querySelectorAll(s);
 
-    // 배너 렌더
+    /* ========================= 배너 ========================= */
     function loadBanners(){
+      // 상/하
       const map = { top:'bn-top', bottom:'bn-bottom' };
       for(const pos in map){
         const cfg = ADMIN_BANNERS[pos];
@@ -193,11 +206,12 @@
           a.appendChild(img); el.appendChild(a);
         }else{ el.innerHTML = `<div class="small">${pos} 배너 미지정</div>`; }
       }
+      // 좌/우 고정
       createSideFloat('left', ADMIN_BANNERS.left);
       createSideFloat('right', ADMIN_BANNERS.right);
+      // 공지
       const n = document.getElementById('noticeArea'); if(n) n.textContent = ADMIN_NOTICE_TEXT || '';
     }
-
     function createSideFloat(side, cfg){
       let wrap = document.getElementById('float-'+side);
       if(!wrap){ wrap = document.createElement('div'); wrap.id = 'float-'+side; wrap.className = 'side-float ' + side; document.body.appendChild(wrap); }
@@ -210,13 +224,43 @@
       }
     }
 
-    // 유틸
+    /* ========================= 유틸 ========================= */
     function setStatus(t){ $('#status').textContent = t }
-    function parseItemLevel(raw){ if(!raw) return 0; const num = parseFloat(String(raw).replace(/[^0-9.]/g,'')); return isNaN(num)?0:num; }
+    function parseItemLevel(raw){
+      if(!raw) return 0;
+      const num = parseFloat(String(raw).replace(/[^0-9.]/g,''));
+      return isNaN(num)?0:num;
+    }
     function esc(s){ return String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
     function escNl(s){ return esc(s).replace(/\n/g,'<br>'); }
 
-    // 캐릭터 API
+    // tooltip helpers
+    function stripTags(s){ return String(s||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(); }
+    function flattenTooltip(tooltipRaw){
+      if(!tooltipRaw) return '';
+      const j = JSON.parse(String(tooltipRaw).replace(/\\"/g,'"'));
+      const pick = [];
+      for(const k in j){
+        const v = j[k]?.value;
+        pick.push(
+          v?.Element_000?.contentStr ?? v?.Element_001?.contentStr ?? v?.Element_002?.contentStr ??
+          v?.Element_000 ?? v?.leftStr ?? v?.rightStr ?? (typeof v==='string'?v:'') ?? ''
+        );
+      }
+      return pick.filter(Boolean).join('\n');
+    }
+    // 부여 옵션(상/중/하)만 뽑기
+    function extractAffixOptions(tooltipRaw){
+      const flat = flattenTooltip(tooltipRaw);
+      return flat
+        .split(/\n|<br>|<BR>/)
+        .map(s => s.replace(/&nbsp;/g,' ').trim())
+        .filter(Boolean)
+        .filter(s => /^ *(상|중|하)\b/.test(stripTags(s)))
+        .map(s => stripTags(s));
+    }
+
+    /* ========================= 캐릭터 API/매핑 ========================= */
     async function fetchChar(name){
       const ctl = new AbortController(); const to=setTimeout(()=>ctl.abort(), 10000);
       try{
@@ -233,7 +277,7 @@
       const equips = raw?.ArmoryEquipment || [];
       const engrs = (raw?.ArmoryEngraving?.Engravings||[]).map(e=>`${e.Name} ${e.Level? 'Lv.'+e.Level: ''}`);
 
-      // 전투력/직업
+      // 전투력
       const stats = p?.Stats || raw?.ArmoryProfile?.Stats || [];
       const combat = (()=>{
         try{
@@ -242,13 +286,16 @@
         }catch(_){ return '-'; }
       })();
 
+      // 아이템 레벨(폴백 강화)
+      const ilvText = p.ItemMaxLevel || p.ItemAvgLevel || p.ItemLevel || p?.Item?.MaxLevel || '-';
+
       return {
         name: p.CharacterName||'-',
         server: p.ServerName||'-',
         cls: p.CharacterClassName||'-',
         avatar: p.CharacterImage||'',
-        itemLevelText: p.ItemMaxLevel||'-',
-        itemLevelNum: parseItemLevel(p.ItemMaxLevel),
+        itemLevelText: ilvText,
+        itemLevelNum: parseItemLevel(ilvText),
         combatPower: combat,
         equipment: equips.map(x=>({ name:x.Name, grade:x.Grade||'', icon:x.Icon||'', tooltip:x.Tooltip||'' })),
         engraves: engrs,
@@ -257,13 +304,17 @@
 
     function mockChar(name){
       const ilv = 1500 + Math.floor(Math.random()*300);
-      return { name, server:'아만', cls:'버서커', avatar:'https://images.unsplash.com/photo-1602524819170-51aeb0f3f9f4?q=80&w=600&auto=format&fit=crop', itemLevelText: ilv.toFixed(2), itemLevelNum: ilv, combatPower: (100000 + Math.floor(Math.random()*50000)).toLocaleString(), equipment:[{icon:'https://via.placeholder.com/42',grade:'유물',tooltip:''}], engraves:['원한 Lv.3','예리한 둔기 Lv.3'] };
+      return { name, server:'아만', cls:'버서커', avatar:'', itemLevelText: ilv.toFixed(2), itemLevelNum: ilv, combatPower: (100000 + Math.floor(Math.random()*50000)).toLocaleString(), equipment:[{icon:'https://via.placeholder.com/42',grade:'유물',tooltip:''}], engraves:['원한 Lv.3','예리한 둔기 Lv.3'] };
     }
 
-    // 그리드 렌더
+    /* ========================= 그리드 렌더 ========================= */
     function renderSkeleton(){
       $('#charGrid').innerHTML = ADMIN_CHARACTERS.map(()=>`
-        <div class="card-char"><div class="skeleton" style="width:100%;aspect-ratio:1/1;border-radius:12px"></div><div class="skeleton" style="height:16px;border-radius:8px;margin-top:8px"></div><div class="skeleton" style="height:12px;border-radius:6px;margin-top:6px;opacity:.6"></div></div>`).join('');
+        <div class="card-char">
+          <div class="skeleton" style="width:100%;aspect-ratio:1/1;border-radius:12px"></div>
+          <div class="skeleton" style="height:16px;border-radius:8px;margin-top:8px"></div>
+          <div class="skeleton" style="height:12px;border-radius:6px;margin-top:6px;opacity:.6"></div>
+        </div>`).join('');
     }
     function renderGrid(list){
       const wrap = $('#charGrid');
@@ -275,8 +326,8 @@
             <div class="name">${esc(it.name)}</div>
             <div class="meta">서버: ${esc(it.server)}</div>
             <div class="meta">직업: ${esc(it.cls||'-')}</div>
-            <div class="row"><span class="small">아이템 레벨</span><strong>${esc(it.itemLevelText)}</strong></div>
-            <div class="row"><span class="small">전투력</span><strong>${esc(it.combatPower)}</strong></div>
+            <div class="row"><span class="small">아이템 레벨</span><strong>${esc(it.itemLevelText||'-')}</strong></div>
+            <div class="row"><span class="small">전투력</span><strong>${esc(it.combatPower||'-')}</strong></div>
           </div>`;
       }).join('');
       wrap.querySelectorAll('.card-char').forEach(el=>{
@@ -288,35 +339,54 @@
       setStatus(`표시: ${list.length}개 · 정렬: 아이템 레벨`);
     }
 
-    // 상세 모달: 아이콘 + 옵션요약
+    /* ========================= 상세 모달: 부여 옵션만 표시 ========================= */
     function openDetail(d){
       $('#dAvatar').src = d.avatar || '';
-      $('#dName').textContent = d.name; $('#dServer').textContent = '서버: '+d.server; $('#dCls').textContent=d.cls||'-'; $('#dIlv').textContent = d.itemLevelText; $('#dCp').textContent = d.combatPower;
-      const eq = d.equipment||[]; const eqWrap = $('#dEquip'); eqWrap.innerHTML='';
-      if(eq.length===0){ eqWrap.innerHTML = '<div class="small">장비 정보 없음</div>'; }
-      else {
+      $('#dName').textContent = d.name;
+      $('#dServer').textContent = '서버: '+d.server;
+      $('#dCls').textContent = d.cls||'-';
+      $('#dIlv').textContent = d.itemLevelText||'-';
+      $('#dCp').textContent = d.combatPower||'-';
+
+      const eq = d.equipment||[];
+      const eqWrap = $('#dEquip'); eqWrap.innerHTML='';
+      if(eq.length===0){
+        eqWrap.innerHTML = '<div class="small">장비 정보 없음</div>';
+      }else{
         eq.forEach(e=>{
           const div=document.createElement('div'); div.className='item';
           const icon = e.icon? `<img src="${e.icon}" alt="" style="width:42px;height:42px;border-radius:8px;object-fit:cover">` : '';
-          // 옵션 파싱
-          let opts=[]; try{
-            const t=(e.tooltip||'');
-            const json = JSON.parse(t.replace(/\\"/g,'"'));
-            const rawLines=[]; for(const k in json){ const v=json[k]?.value; const pick=(v?.Element_000?.contentStr||v?.Element_001?.contentStr||v?.Element_000||v?.leftStr||v?.rightStr||v||'')+''; if(pick) rawLines.push(pick); }
-            opts = rawLines.map(s=>String(s).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim()).filter(x=>/\d/.test(x));
-          }catch{}
-          if(!opts.length) opts=['옵션 정보 없음'];
-          div.innerHTML = `<div style="display:flex;align-items:center;gap:10px">${icon}<div><div class="small">${e.grade||''}</div><div class="small">${opts.slice(0,4).join(' · ')}</div></div></div>`;
+
+          // 부여 옵션만 추출 (상/중/하)
+          const lines = extractAffixOptions(e.tooltip).slice(0,6);
+          const htmlLines = lines.map(line=>{
+            const grade = line.startsWith('상') ? 'orange' : line.startsWith('중') ? 'purple' : 'blue';
+            const text = line.replace(/^(상|중|하)\s*/,'');
+            return `<div class="opt-line"><span class="tag ${grade}">${line[0]}</span><span class="small">${esc(text)}</span></div>`;
+          }).join('');
+
+          div.innerHTML = `
+            <div style="display:flex;align-items:center;gap:10px">
+              ${icon}
+              <div>
+                <div class="small">${esc(e.grade||'')}</div>
+                <div class="opt-lines" style="margin-top:4px">
+                  ${htmlLines || '<span class="small">부여 옵션 없음</span>'}
+                </div>
+              </div>
+            </div>`;
           eqWrap.appendChild(div);
         });
       }
+
       const en = d.engraves||[]; const enWrap=$('#dEngr'); enWrap.innerHTML='';
       if(en.length===0){ enWrap.innerHTML='<span class="small">각인 정보 없음</span>'; }
       else { en.forEach(s=>{ const sp=document.createElement('span'); sp.className='chip'; sp.textContent=s; enWrap.appendChild(sp); }); }
+
       $('#detailModal').classList.add('on');
     }
 
-    // 데이터 갱신
+    /* ========================= 데이터 갱신 ========================= */
     async function refreshAll(){
       try{
         setStatus('전체 불러오는 중...');
@@ -339,7 +409,7 @@
       setInterval(refreshAll, AUTO_MS);
     }
 
-    // 게시판(서버 저장)
+    /* ========================= 게시판(서버 저장) ========================= */
     async function hashPwd(p){ if(!window.crypto?.subtle) return p; const enc=new TextEncoder().encode(p); const buf=await crypto.subtle.digest('SHA-256',enc); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
 
     async function loadPosts(){
@@ -386,9 +456,15 @@
       loadPosts();
     }
 
-    // 초기화
+    /* ========================= 초기화 ========================= */
     document.addEventListener('DOMContentLoaded',()=>{
-      loadBanners(); bootChars(); bootBoard();
+      // 모바일에서 초기 hide되는 경우 방지
+      if (matchMedia('(max-width: 720px)').matches) {
+        document.querySelectorAll('.card').forEach(el=>el.style.opacity=1);
+      }
+      loadBanners();
+      bootChars();
+      bootBoard();
       $('#closeDetail').addEventListener('click',()=> $('#detailModal').classList.remove('on'));
       $('#detailModal').addEventListener('click',(e)=>{ if(e.target.id==='detailModal') $('#detailModal').classList.remove('on'); });
     });
