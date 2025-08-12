@@ -68,7 +68,7 @@
     .equip{display:grid;gap:10px}
     .equip .item{display:flex;gap:10px;background:rgba(255,255,255,.04);padding:10px;border-radius:10px;align-items:center}
     .engr{display:flex;gap:6px;flex-wrap:wrap}
-    .chip{background:linear-gradient(90deg, rgba(212,175,55,.16), transparent);padding:3px 8px;border-radius:999px;color:var(--gold);font-weight:800;font-size:12px}
+    .chip{background:linear-gradient(90deg, rgba(212,175,55,.16), transparent);padding:3px 8px;border-radius:999px;color:#d4af37;font-weight:800;font-size:12px}
 
     /* 옵션 라인(부여 옵션) */
     .opt-lines{display:grid;gap:6px}
@@ -88,6 +88,15 @@
     @media (max-width:760px){ .grid{grid-template-columns:repeat(2,1fr)} .card{padding:12px} .name{font-size:15px} }
     @media (max-width:520px){ .grid{grid-template-columns:1fr} .top-banner,.bottom-banner{min-height:80px} .controls{gap:6px} button{padding:8px 12px} }
     @media (max-width:600px){ .card-char img{display:none} } /* 모바일 간략 카드: 이미지 숨김 */
+
+    /* === DEBUG OVERLAY === */
+    .debug-btn{position:fixed;right:12px;bottom:12px;z-index:99999;background:#1d2633;border:1px solid rgba(255,255,255,.2);color:#ffd58a;border-radius:10px;padding:8px 10px;font-size:12px;cursor:pointer}
+    .debug-panel{position:fixed;right:12px;bottom:52px;z-index:99999;width:min(92vw,520px);max-height:60vh;overflow:auto;background:#0c121a;border:1px solid rgba(255,255,255,.25);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+    .debug-panel header{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#111926;border-bottom:1px solid rgba(255,255,255,.12)}
+    .debug-panel header .title{font-weight:800;color:#ffd58a;font-size:12px}
+    .debug-panel header .actions{display:flex;gap:6px}
+    .debug-panel pre{margin:0;padding:10px;white-space:pre-wrap;word-break:break-all;font-size:12px;line-height:1.45;color:#cfe1ff}
+    .debug-chip{display:inline-block;margin-right:6px;padding:2px 6px;border-radius:999px;background:rgba(255,255,255,.06);color:#cfe1ff;font-size:11px}
   </style>
 </head>
 <body>
@@ -164,7 +173,20 @@
     </div>
   </div>
 
-  <!-- ===== 모바일 호환 폴리필 (allSettled, AbortController) ===== -->
+  <!-- 디버그 버튼/패널 -->
+  <button id="__dbgBtn" class="debug-btn">디버그</button>
+  <div id="__dbgPanel" class="debug-panel" style="display:none">
+    <header>
+      <div class="title">API Debug</div>
+      <div class="actions">
+        <button id="__dbgClear" class="debug-btn" style="position:static;margin:0;">지우기</button>
+        <button id="__dbgClose" class="debug-btn" style="position:static;margin:0;">닫기</button>
+      </div>
+    </header>
+    <pre id="__dbgOut"></pre>
+  </div>
+
+  <!-- 모바일 호환 폴리필 -->
   <script>
     (function(){
       if (!Promise.allSettled) {
@@ -195,12 +217,39 @@
 
     var ADMIN_NOTICE_TEXT = '카제 대구리 따러가실 분 공대장: 김민지';
 
-    /* 상대경로로 통일: 같은 도메인으로 호출 → 모바일 CORS 회피 */
+    /* 절대경로(API 프록시) */
     var API_BASE = 'https://yong-qgw8.vercel.app/api';
-    var AUTO_MS = 60*60*1000; /* 1시간 */
+    var AUTO_MS = 60*60*1000;
 
     var $ = function(s){ return document.querySelector(s); };
     var qs = function(s){ return document.querySelectorAll(s); };
+
+    /* ========================= 디버그 로거 ========================= */
+    (function(){
+      var panel = null, out = null, btn = null, btnClose = null, btnClear = null;
+      function init(){
+        panel = document.getElementById('__dbgPanel');
+        out = document.getElementById('__dbgOut');
+        btn = document.getElementById('__dbgBtn');
+        btnClose = document.getElementById('__dbgClose');
+        btnClear = document.getElementById('__dbgClear');
+        if(btn){ btn.addEventListener('click', function(){
+          var show = panel.style.display !== 'block'; panel.style.display = show? 'block':'none';
+        });}
+        if(btnClose){ btnClose.addEventListener('click', function(){ panel.style.display='none'; }); }
+        if(btnClear){ btnClear.addEventListener('click', function(){ out.textContent=''; }); }
+      }
+      function ts(){ var d=new Date(); return d.toLocaleTimeString(); }
+      function trim(s, n){ s=String(s||''); return s.length>n? s.slice(0,n)+'…('+s.length+')' : s; }
+      window.__dbg = function(label, obj){
+        if(!panel) init();
+        if(!out) return;
+        var j; try { j = typeof obj==='string'? obj : JSON.stringify(obj, null, 2); } catch(e){ j = String(obj); }
+        var line = "["+ts()+"] "+label+"\n"+trim(j, 20000)+"\n\n";
+        out.textContent = line + out.textContent;
+      };
+      init();
+    })();
 
     /* ========================= 배너 ========================= */
     function loadBanners(){
@@ -280,23 +329,50 @@
       }
     }
 
-    /* ========================= 캐릭터 API ========================= */
+    /* ========================= 캐릭터 API (디버그 출력 포함) ========================= */
     async function fetchChar(name){
-      var url = API_BASE + '/character?name=' + encodeURIComponent(name) + '&_t=' + Date.now(); // 캐시 회피
+      var url = API_BASE + '/character?name=' + encodeURIComponent(name) + '&_t=' + Date.now();
       try{
-        var raw = await fetchJsonWithRetry(url, 2, 500);
-        return mapArmory(raw);
+        __dbg('REQ ' + name, { url:url });
+        var res = await fetch(url, { mode:'cors', cache:'no-store' });
+        var status = res.status;
+        var text = await res.text();
+        __dbg('RES ' + name + ' ('+status+')', text);
+
+        if(!res.ok) throw new Error('API '+status);
+
+        // JSON 안전 파싱
+        var raw; try { raw = JSON.parse(text); } catch(_){ raw = text; }
+
+        // 평평한 구조 보정
+        if (raw && !raw.ArmoryProfile && (raw.CharacterName || raw.ItemMaxLevel || raw.ItemAvgLevel || raw.ItemLevel)) {
+          raw = { ArmoryProfile: raw };
+        }
+
+        var mapped = mapArmory(raw);
+        __dbg('MAP ' + name, mapped);
+        return mapped;
       }catch(err){
-        console.warn('[fetchChar fail]', name, err && err.message);
-        return mockChar(name); // 최종 실패 시 모의 데이터
+        __dbg('ERR ' + name, String(err && err.message || err));
+        return mockChar(name);
       }
     }
 
-    // ★ 아이템 레벨 강한 폴백 + 전투력 없으면 공격력 폴백 (구형 브라우저 호환)
+    // 강한 폴백 매핑 (전투력→공격력, 아이템레벨 Max→Avg→Level)
     function mapArmory(raw){
       raw = raw || {};
       var p = raw.ArmoryProfile || {};
-      var equips = raw.ArmoryEquipment || [];
+      if (!p || Object.keys(p).length === 0) {
+        p = {
+          CharacterName: raw.CharacterName || raw.characterName || '-',
+          ServerName: raw.ServerName || raw.serverName || raw.Server || '-',
+          CharacterClassName: raw.CharacterClassName || raw.characterClassName || raw.ClassName || raw.Class || '-',
+          CharacterImage: raw.CharacterImage || raw.characterImage || '',
+          ItemMaxLevel: raw.ItemMaxLevel || raw.ItemAvgLevel || raw.ItemLevel || raw['Item Max Level'] || raw['Item Avg Level'] || raw['Item Level'] || '-',
+          Stats: raw.Stats || []
+        };
+      }
+      var equips = raw.ArmoryEquipment || raw.Equipment || [];
       var engrObj = (raw.ArmoryEngraving && raw.ArmoryEngraving.Engravings) ? raw.ArmoryEngraving.Engravings : [];
       var engrs = engrObj.map(function(e){
         var nm = e && e.Name ? e.Name : '';
@@ -304,12 +380,10 @@
         return (nm + lv).trim();
       });
 
-      // 아이템 레벨: Max → Avg → Level → 기타 키
       var ilvText =
         p.ItemMaxLevel || p.ItemAvgLevel || p.ItemLevel ||
         p['Item Max Level'] || p['Item Avg Level'] || p['Item Level'] || '-';
 
-      // 전투력: '전투력/Combat Power' → 없으면 '공격력/Attack'
       var stats = Array.isArray(p.Stats) ? p.Stats : ((raw.ArmoryProfile && raw.ArmoryProfile.Stats) || []);
       function pickStat(keys){
         for(var i=0;i<stats.length;i++){
@@ -334,7 +408,7 @@
         itemLevelText: ilvText,
         itemLevelNum: parseItemLevel(ilvText),
         combatPower: combatPower,
-        equipment: equips.map(function(x){
+        equipment: (equips || []).map(function(x){
           x = x || {};
           return { name:x.Name, grade:x.Grade||'', icon:x.Icon||'', tooltip:x.Tooltip||'' };
         }),
@@ -442,7 +516,7 @@
         renderGrid(list);
         try{ localStorage.setItem('gridCache_v3', JSON.stringify(list)); }catch(_){}
       }catch(err){
-        console.warn('refreshAll fail', err);
+        __dbg('refreshAll ERR', String(err && err.message || err));
         try{
           var cache = localStorage.getItem('gridCache_v3');
           if(cache){ renderGrid(JSON.parse(cache)); setStatus('오프라인 캐시 표시'); return; }
@@ -454,14 +528,10 @@
     }
 
     function bootChars(){
-      // 캐시 먼저
       var cache = localStorage.getItem('gridCache_v3'); if(cache){ try{ renderGrid(JSON.parse(cache)); }catch(_){ } }
-      // 모바일은 즉시 갱신(IntersectionObserver 의존 없음)
-      refreshAll();
+      refreshAll(); // 모바일/PC 모두 즉시 갱신
       $('#refreshAll').addEventListener('click', refreshAll);
       setInterval(refreshAll, AUTO_MS);
-
-      // 온라인/오프라인 상태 반영
       window.addEventListener('online',  function(){ setStatus('온라인 복구: 재동기화 중...'); refreshAll(); });
       window.addEventListener('offline', function(){ setStatus('오프라인: 캐시/모의 데이터 표시'); });
     }
