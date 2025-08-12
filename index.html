@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>lostamen — 캐릭터 보드</title>
+  <title>군장검사</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -18,7 +18,7 @@
       background:linear-gradient(180deg,#071016 0%, #07131a 60%);
       color:#e6eef6; line-height:1.55; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
     }
-    .container{max-width:1200px;margin:0 auto;display:grid;gap:16px}
+    .container{max-width:1000px;margin:0 auto;display:grid;gap:16px}
 
     /* 공통 카드 */
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:var(--radius);padding:16px;border:1px solid rgba(255,255,255,0.06);box-shadow:var(--shadow)}
@@ -31,7 +31,7 @@
     .top-banner img,.bottom-banner img{width:100%;height:100%;object-fit:cover;display:block}
 
     /* 화면 좌우 고정 배너 */
-    .side-float{position:fixed; top:160px; width:160px; z-index:50; background:rgba(0,0,0,.12); border-radius:12px; overflow:hidden}
+    .side-float{position:fixed; top:300px; width:160px; z-index:50; background:rgba(0,0,0,.12); border-radius:12px; overflow:hidden}
     .side-float.left{left:16px}
     .side-float.right{right:16px}
     .side-float a{display:block; line-height:0}
@@ -169,7 +169,7 @@
     };
 
     // 공지(코드로만 등록)
-    const ADMIN_NOTICE_TEXT = '카제로스 더퍼스트 가실 분 공대장: 김민지';
+    const ADMIN_NOTICE_TEXT = '카제 대구리 따러가실 분 공대장: 김민지';
 
     // API 베이스 (character, posts 공용)
     const API_BASE = 'https://yong-qgw8.vercel.app/api';
