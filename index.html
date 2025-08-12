@@ -340,10 +340,9 @@
 
         if(!res.ok) throw new Error('API '+status);
 
-        // JSON 안전 파싱
         var raw; try { raw = JSON.parse(text); } catch(_){ raw = text; }
 
-        // 백엔드 통합 응답(data/최상위키)도, 원본 Lost Ark 응답도 다 흡수
+        // 백엔드 통합 응답(data/최상위키) → Lost Ark 원형 구조로 정규화
         if (raw && !raw.ArmoryProfile) {
           var d = raw.data && typeof raw.data === 'object' ? raw.data : raw;
           raw = {
@@ -353,7 +352,7 @@
               CharacterClassName: d.cls || d.CharacterClassName || '-',
               CharacterImage: d.avatar || d.CharacterImage || '',
               ItemMaxLevel: d.itemLevelText || d.ItemMaxLevel || d.ItemAvgLevel || d.ItemLevel || '-',
-              Stats: d.Stats || []
+              Stats: Array.isArray(d.stats) ? d.stats : []
             },
             ArmoryEquipment: Array.isArray(d.equipment) ? d.equipment : [],
             ArmoryEngraving: { Engravings: Array.isArray(d.engraves)
@@ -374,21 +373,14 @@
       }
     }
 
-    // 폴백 매핑(전투력/아이템레벨 스마트 추출)
+    // 폴백 매핑(전투력/아이템레벨/장비 옵션 추출)
     function mapArmory(raw){
       raw = raw || {};
       var p = raw.ArmoryProfile || {};
       var equips = raw.ArmoryEquipment || [];
       var engrObj = (raw.ArmoryEngraving && raw.ArmoryEngraving.Engravings) ? raw.ArmoryEngraving.Engravings : [];
 
-      var engrs = engrObj.map(function(e){
-        if (typeof e === 'string') return e;
-        var nm = e && e.Name ? e.Name : '';
-        var lv = e && e.Level ? (' Lv.'+e.Level) : '';
-        return (nm + lv).trim();
-      });
-
-      var ilvText = p.ItemMaxLevel || p.ItemAvgLevel || p.ItemLevel || '-';
+      // 전투력/공격력 추출
       var stats = Array.isArray(p.Stats) ? p.Stats : [];
       function pickStat(keys){
         for(var i=0;i<stats.length;i++){
@@ -405,6 +397,42 @@
         pickStat(['공격력','attack power','attack']) ||
         '-';
 
+      var ilvText = p.ItemMaxLevel || p.ItemAvgLevel || p.ItemLevel || '-';
+
+      var engrs = engrObj.map(function(e){
+        if (typeof e === 'string') return e;
+        var nm = e && (e.Name || e.name) ? (e.Name || e.name) : '';
+        var lv = e && (e.Level || e.level) ? (' Lv.'+(e.Level || e.level)) : '';
+        return (nm + lv).trim();
+      });
+
+      // 등급 클래스
+      function gradeClass(g){
+        g = String(g||'').trim();
+        if (/고대/.test(g)) return 'ancient';    // gold-ish
+        if (/유물/.test(g)) return 'relic';      // red
+        if (/전설/.test(g)) return 'legendary';  // orange
+        if (/영웅/.test(g)) return 'epic';       // purple
+        if (/희귀/.test(g)) return 'rare';       // blue
+        if (/고급/.test(g)) return 'uncommon';   // green
+        return 'common';
+      }
+
+      // 장비: 품질/툴팁 파싱
+      var eq = (equips||[]).map(function(x){
+        x = x || {};
+        var lines = extractAffixOptions(x.Tooltip || x.tooltip || '').slice(0,6);
+        return {
+          name: x.Name || '',
+          grade: x.Grade || '',
+          gradeClass: gradeClass(x.Grade || ''),
+          icon: x.Icon || x.icon || '',
+          quality: typeof x.Quality==='number' ? x.Quality : (typeof x.quality==='number' ? x.quality : null),
+          tooltip: x.Tooltip || x.tooltip || '',
+          lines: lines
+        };
+      });
+
       return {
         name: p.CharacterName || '-',
         server: p.ServerName || '-',
@@ -413,10 +441,7 @@
         itemLevelText: ilvText,
         itemLevelNum: parseItemLevel(ilvText),
         combatPower: combatPower,
-        equipment: equips.map(function(x){
-          x = x || {};
-          return { name:x.Name, grade:x.Grade||'', icon:x.Icon||'', tooltip:x.Tooltip||'' };
-        }),
+        equipment: eq,
         engraves: engrs
       };
     }
@@ -466,7 +491,7 @@
       setStatus('표시: '+list.length+'개 · 정렬: 아이템 레벨');
     }
 
-    /* ========================= 상세 모달 (부여 옵션만) ========================= */
+    /* ========================= 상세 모달 (KLOA 느낌) ========================= */
     function openDetail(d){
       $('#dAvatar').src = d.avatar || '';
       $('#dName').textContent = d.name;
@@ -480,23 +505,49 @@
         eqWrap.innerHTML = '<div class="small">장비 정보 없음</div>';
       }else{
         for(var i=0;i<eq.length;i++){
-          var e = eq[i], div=document.createElement('div'); div.className='item';
-          var icon = e.icon? '<img src="'+e.icon+'" alt="" style="width:42px;height:42px;border-radius:8px;object-fit:cover">' : '';
-          var lines = extractAffixOptions(e.tooltip).slice(0,6);
-          var htmlLines='', j;
-          for(j=0;j<lines.length;j++){
-            var line = lines[j];
-            var grade = line.indexOf('상')===0 ? 'orange' : (line.indexOf('중')===0 ? 'purple' : 'blue');
-            var text = line.replace(/^(상|중|하)\s*/, '');
-            htmlLines += '<div class="opt-line"><span class="tag '+grade+'">'+line.charAt(0)+'</span><span class="small">'+esc(text)+'</span></div>';
-          }
-          div.innerHTML =
-            '<div style="display:flex;align-items:center;gap:10px">'
+          var e = eq[i];
+          var icon = e.icon? '<img src="'+e.icon+'" alt="" style="width:42px;height:42px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.08)">' : '';
+
+          // 품질 바
+          var qHtml = (typeof e.quality==='number')
+            ? '<div class="small" style="margin-top:4px">품질 '
+              + '<span style="font-weight:800">'+e.quality+'</span>'
+              + '<div style="height:6px;border-radius:999px;background:rgba(255,255,255,.08);margin-top:4px;overflow:hidden">'
+              + '<div style="height:6px;width:'+Math.max(0,Math.min(100,e.quality))+'%;background:linear-gradient(90deg,#3fb950,#f2cc60,#ff6b6b)"></div>'
+              + '</div></div>'
+            : '';
+
+          // 옵션 라인
+          var lines = e.lines||[];
+          var htmlLines = lines.length
+            ? lines.map(function(line){
+                var g = line.indexOf('상')===0 ? 'orange' : (line.indexOf('중')===0 ? 'purple' : 'blue');
+                var text = line.replace(/^(상|중|하)\s*/, '');
+                return '<div class="opt-line"><span class="tag '+g+'">'+line.charAt(0)+'</span><span class="small">'+esc(text)+'</span></div>';
+              }).join('')
+            : '<span class="small">부여 옵션 없음</span>';
+
+          var gradeBorder = {
+            ancient:'#d4af37', relic:'#f44336', legendary:'#ffa726', epic:'#b388ff', rare:'#64b5f6', uncommon:'#66bb6a', common:'#9aa6b2'
+          }[e.gradeClass||'common'] || '#9aa6b2';
+
+          var box = document.createElement('div');
+          box.className = 'item';
+          box.style.border = '1px solid rgba(255,255,255,.08)';
+          box.style.borderLeft = '4px solid '+gradeBorder;
+          box.innerHTML =
+            '<div style="display:flex;gap:10px">'
             + icon
-            + '<div><div class="small">'+esc(e.grade||'')+'</div>'
-            + '<div class="opt-lines" style="margin-top:4px">'+(htmlLines || '<span class="small">부여 옵션 없음</span>')+'</div>'
+            + '<div style="flex:1;min-width:0">'
+            + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+            +   '<div class="small" style="font-weight:800;color:'+gradeBorder+'">'+esc(e.grade||'')+'</div>'
+            +   '<div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(e.name||'')+'</div>'
+            + '</div>'
+            + qHtml
+            + '<div class="opt-lines" style="margin-top:6px">'+htmlLines+'</div>'
             + '</div></div>';
-          eqWrap.appendChild(div);
+
+          eqWrap.appendChild(box);
         }
       }
 
