@@ -66,7 +66,6 @@
     .panel .right{padding:14px}
     .closeX{position:sticky;left:100%;top:10px;background:transparent;border:0;color:#cfd8e3;font-size:22px;cursor:pointer}
     .equip{display:grid;gap:10px}
-    .equip .item{display:flex;gap:10px;background:rgba(255,255,255,.04);padding:10px;border-radius:10px;align-items:center}
     .engr{display:flex;gap:6px;flex-wrap:wrap}
     .chip{background:linear-gradient(90deg, rgba(212,175,55,.16), transparent);padding:3px 8px;border-radius:999px;color:#d4af37;font-weight:800;font-size:12px}
 
@@ -329,7 +328,7 @@
       }
     }
 
-    /* ========================= 캐릭터 API (디버그 출력 포함) ========================= */
+    /* ========================= 캐릭터 API (디버그 포함, 호환 강화 통합본) ========================= */
     async function fetchChar(name){
       var url = API_BASE + '/character?name=' + encodeURIComponent(name) + '&_t=' + Date.now();
       try{
@@ -344,9 +343,26 @@
         // JSON 안전 파싱
         var raw; try { raw = JSON.parse(text); } catch(_){ raw = text; }
 
-        // 평평한 구조 보정
-        if (raw && !raw.ArmoryProfile && (raw.CharacterName || raw.ItemMaxLevel || raw.ItemAvgLevel || raw.ItemLevel)) {
-          raw = { ArmoryProfile: raw };
+        // 백엔드 통합 응답(data/최상위키)도, 원본 Lost Ark 응답도 다 흡수
+        if (raw && !raw.ArmoryProfile) {
+          var d = raw.data && typeof raw.data === 'object' ? raw.data : raw;
+          raw = {
+            ArmoryProfile: {
+              CharacterName: d.name || d.CharacterName || '-',
+              ServerName: d.server || d.ServerName || '-',
+              CharacterClassName: d.cls || d.CharacterClassName || '-',
+              CharacterImage: d.avatar || d.CharacterImage || '',
+              ItemMaxLevel: d.itemLevelText || d.ItemMaxLevel || d.ItemAvgLevel || d.ItemLevel || '-',
+              Stats: d.Stats || []
+            },
+            ArmoryEquipment: Array.isArray(d.equipment) ? d.equipment : [],
+            ArmoryEngraving: { Engravings: Array.isArray(d.engraves)
+              ? d.engraves.map(function(e){
+                  if (typeof e === 'string') return { Name: e, Level: '' };
+                  return { Name: e.name || e.Name || '', Level: e.level || e.Level || '' };
+                })
+              : [] }
+          };
         }
 
         var mapped = mapArmory(raw);
@@ -358,33 +374,22 @@
       }
     }
 
-    // 강한 폴백 매핑 (전투력→공격력, 아이템레벨 Max→Avg→Level)
+    // 폴백 매핑(전투력/아이템레벨 스마트 추출)
     function mapArmory(raw){
       raw = raw || {};
       var p = raw.ArmoryProfile || {};
-      if (!p || Object.keys(p).length === 0) {
-        p = {
-          CharacterName: raw.CharacterName || raw.characterName || '-',
-          ServerName: raw.ServerName || raw.serverName || raw.Server || '-',
-          CharacterClassName: raw.CharacterClassName || raw.characterClassName || raw.ClassName || raw.Class || '-',
-          CharacterImage: raw.CharacterImage || raw.characterImage || '',
-          ItemMaxLevel: raw.ItemMaxLevel || raw.ItemAvgLevel || raw.ItemLevel || raw['Item Max Level'] || raw['Item Avg Level'] || raw['Item Level'] || '-',
-          Stats: raw.Stats || []
-        };
-      }
-      var equips = raw.ArmoryEquipment || raw.Equipment || [];
+      var equips = raw.ArmoryEquipment || [];
       var engrObj = (raw.ArmoryEngraving && raw.ArmoryEngraving.Engravings) ? raw.ArmoryEngraving.Engravings : [];
+
       var engrs = engrObj.map(function(e){
+        if (typeof e === 'string') return e;
         var nm = e && e.Name ? e.Name : '';
         var lv = e && e.Level ? (' Lv.'+e.Level) : '';
         return (nm + lv).trim();
       });
 
-      var ilvText =
-        p.ItemMaxLevel || p.ItemAvgLevel || p.ItemLevel ||
-        p['Item Max Level'] || p['Item Avg Level'] || p['Item Level'] || '-';
-
-      var stats = Array.isArray(p.Stats) ? p.Stats : ((raw.ArmoryProfile && raw.ArmoryProfile.Stats) || []);
+      var ilvText = p.ItemMaxLevel || p.ItemAvgLevel || p.ItemLevel || '-';
+      var stats = Array.isArray(p.Stats) ? p.Stats : [];
       function pickStat(keys){
         for(var i=0;i<stats.length;i++){
           var s = stats[i] || {};
@@ -408,7 +413,7 @@
         itemLevelText: ilvText,
         itemLevelNum: parseItemLevel(ilvText),
         combatPower: combatPower,
-        equipment: (equips || []).map(function(x){
+        equipment: equips.map(function(x){
           x = x || {};
           return { name:x.Name, grade:x.Grade||'', icon:x.Icon||'', tooltip:x.Tooltip||'' };
         }),
