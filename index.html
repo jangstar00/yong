@@ -23,19 +23,15 @@
     .small{font-size:12px;color:var(--muted)}
     button{background:transparent;border:1px solid rgba(255,255,255,0.12);padding:10px 14px;border-radius:12px;color:var(--gold);cursor:pointer}
     button:active{transform:translateY(1px)}
-
     .top-banner,.bottom-banner{background:var(--glass);border-radius:var(--radius-sm);min-height:110px;display:flex;align-items:center;justify-content:center;overflow:hidden}
     .top-banner img,.bottom-banner img{width:100%;height:100%;object-fit:cover;display:block}
-
     .side-float{position:fixed; top:160px; width:300px; z-index:50; background:rgba(0,0,0,.12); border-radius:12px; overflow:hidden}
     .side-float.left{left:16px}
     .side-float.right{right:16px}
     .side-float a{display:block; line-height:0}
     .side-float img{display:block; width:100%; height:auto; object-fit:cover}
     @media (max-width:1200px){ .side-float{display:none} }
-
     .main{display:grid;grid-template-columns:1fr;gap:16px}
-
     .controls{display:flex;gap:8px;align-items:center;margin-bottom:10px}
     .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
     .card-char{background:var(--panel);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;align-items:stretch;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease}
@@ -45,36 +41,49 @@
     .meta{font-size:12px;color:var(--muted)}
     .row{display:flex;justify-content:space-between;margin-top:6px}
 
+    /* 모달 */
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:9999}
     .modal.on{display:flex}
     .panel{max-width:960px;width:100%;background:#0e141c;border:1px solid rgba(255,255,255,.08);border-radius:16px;display:grid;grid-template-columns:320px 1fr;max-height:90vh;overflow:auto}
-    .panel .left{padding:14px;border-right:1px solid rgba(255,255,255,.06)}
-    .panel .right{padding:14px}
 
     .chip{background:linear-gradient(90deg, rgba(212,175,55,.16), transparent);padding:3px 8px;border-radius:999px;color:#d4af37;font-weight:800;font-size:12px}
-    .equip{display:grid;gap:10px}
-    .equip-row{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:10px}
-    .badge{display:inline-block;padding:2px 6px;border-radius:6px;font-weight:800;font-size:11px;background:rgba(255,255,255,.08)}
-    .qpill{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:999px;font-size:12px;background:rgba(255,255,255,.06)}
-    .gem-pill{padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.06);font-size:12px}
 
-    .opt-lines{display:grid;gap:6px}
+    /* ===== 상세 레이아웃(스케치 반영) ===== */
+    .detail-left h4{margin:10px 0 6px;color:var(--gold)}
+    .engr-box{
+      min-height:220px;background:#0b121a;border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start
+    }
+    .engr-box .chip{font-size:13px}
+    .equip-list{display:grid;gap:8px}
+    .equip-item{
+      display:grid;grid-template-columns:18px 42px 1fr 70px;gap:10px;align-items:center;
+      background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px
+    }
+    .slot-chip{width:18px;height:18px;border-radius:4px}
+    .slot-gear{background:#e53935}   /* 빨간 사각형: 장비 */
+    .slot-acc{background:#1e88e5}    /* 파란 사각형: 악세 */
+    .qbar{height:10px;border-radius:8px;background:rgba(255,255,255,.08);overflow:hidden}
+    .qbar>i{display:block;height:10px;width:0}
     .opt-line{display:flex;gap:8px;align-items:flex-start}
+    .opt-mini{font-size:12px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap}
     .tag{display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800}
     .tag.blue{background:rgba(77,171,245,.18);color:#81c9ff}
     .tag.purple{background:rgba(162,128,255,.18);color:#c7b5ff}
     .tag.orange{background:rgba(255,173,80,.18);color:#ffd29a}
+    .gem-row{display:flex;gap:10px;align-items:center;padding:8px 0}
+    .gem-dot{width:14px;height:14px;border-radius:50%;background:#1e88e5;box-shadow:0 0 0 2px rgba(30,136,229,.25)}
+    .cards-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+    .cards-row .card-item{width:72px}
+    .cards-row .card-item img{width:72px;height:100px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.12)}
+    .cards-row .card-item .small{display:block;text-align:center;margin-top:2px}
 
-    .cards{display:flex;gap:8px;flex-wrap:wrap}
-    .card-slot{width:68px}
-    .card-slot img{width:68px;height:94px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.12)}
-
-    .skeleton{position:relative;overflow:hidden;background:linear-gradient(90deg, rgba(255,255,255,.06), transparent)}
-    .skeleton::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);animation:shimmer 1.4s infinite}
-
+    /* 디버그 */
     .debug-btn{position:fixed;right:12px;bottom:12px;z-index:99999;background:#1d2633;border:1px solid rgba(255,255,255,.2);color:#ffd58a;border-radius:10px;padding:8px 10px;font-size:12px;cursor:pointer}
     .debug-panel{position:fixed;right:12px;bottom:52px;z-index:99999;width:min(92vw,520px);max-height:60vh;overflow:auto;background:#0c121a;border:1px solid rgba(255,255,255,.25);border-radius:10px}
     .debug-panel pre{margin:0;padding:10px;white-space:pre-wrap;word-break:break-all;font-size:12px;color:#cfe1ff}
+
+    @media (max-width:1100px){ .panel{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
@@ -87,8 +96,10 @@
       <div style="margin-left:auto" class="small" id="status">준비됨 · 1시간 자동 갱신</div>
     </header>
 
+    <!-- 배너 -->
     <section class="card top-banner" id="bn-top"></section>
 
+    <!-- 캐릭터 그리드 -->
     <section class="card" id="chars">
       <div class="controls">
         <button id="refreshAll">전체 갱신</button>
@@ -100,10 +111,10 @@
     <section class="card bottom-banner" id="bn-bottom"></section>
   </div>
 
-  <!-- 상세 모달 -->
+  <!-- 상세 모달: 스케치 반영 -->
   <div id="detailModal" class="modal" aria-modal="true" role="dialog">
     <div class="panel">
-      <div class="left">
+      <div class="left detail-left" style="padding:14px;border-right:1px solid rgba(255,255,255,.06)">
         <button id="closeDetail" style="position:sticky;left:100%;top:10px;background:transparent;border:0;color:#cfd8e3;font-size:22px;cursor:pointer">✕</button>
         <img id="dAvatar" alt="avatar" style="width:100%;border-radius:12px;object-fit:cover;aspect-ratio:1/1;background:#061016"/>
         <div style="margin-top:10px">
@@ -114,24 +125,22 @@
             <div class="chip">아이템 레벨 <span id="dIlv">-</span></div>
             <div class="chip" id="dCpWrap" style="display:none">전투력 <span id="dCp">-</span></div>
           </div>
-          <div style="height:10px"></div>
-          <div id="dGemSum" class="small"></div>
-          <div style="height:10px"></div>
-          <div style="font-weight:800;color:var(--gold);margin-bottom:6px">각인</div>
-          <div class="cards" id="dEngr" style="gap:6px"></div>
+          <h4>각인</h4>
+          <div id="engrBox" class="engr-box"></div>
         </div>
       </div>
-      <div class="right">
+
+      <div class="right" style="padding:14px">
         <div style="font-weight:800;color:var(--gold);margin-bottom:6px">장비 상세</div>
-        <div class="equip" id="dEquip"></div>
-        <div style="height:10px"></div>
+        <div id="equipList" class="equip-list"></div>
+        <div class="gem-row" id="gemRow"></div>
         <div style="font-weight:800;color:var(--gold);margin-bottom:6px">카드</div>
-        <div id="dCards" class="cards"></div>
+        <div id="cardsRow" class="cards-row"></div>
       </div>
     </div>
   </div>
 
-  <!-- 디버그 버튼/패널 -->
+  <!-- 디버그 -->
   <button id="__dbgBtn" class="debug-btn">디버그</button>
   <div id="__dbgPanel" class="debug-panel" style="display:none">
     <pre id="__dbgOut"></pre>
@@ -146,36 +155,24 @@
       right:  { img: 'https://jangstar00.github.io/yong/images/rightbaner_tech.png', link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
       bottom: { img: 'https://jangstar00.github.io/yong/images/topbaner_mj.png',     link: 'https://kloa.gg/characters/%EC%95%A0%EC%9D%B4%EB%A5%B4' }
     };
-    var ADMIN_NOTICE_TEXT = '카제 대구리 따러가실 분 공대장: 김민지';
-
-    /* 절대경로(API 프록시) */
-    var API_BASE = 'https://yong-qgw8.vercel.app/api'; // ← 너의 vercel API 주소
+    var API_BASE = 'https://yong-qgw8.vercel.app/api';  /* ← 네 배포 API로 교체 */
     var AUTO_MS = 60*60*1000;
-
     var $ = function(s){ return document.querySelector(s); };
-    var qs = function(s){ return document.querySelectorAll(s); };
 
     /* ========================= 디버그 로거 ========================= */
     (function(){
-      var panel = null, out = null, btn = null;
-      function init(){
-        panel = document.getElementById('__dbgPanel');
-        out = document.getElementById('__dbgOut');
-        btn = document.getElementById('__dbgBtn');
-        if(btn){ btn.addEventListener('click', function(){
-          var show = panel.style.display !== 'block'; panel.style.display = show? 'block':'none';
-        });}
-      }
+      var out=null, panel=null, btn=null;
       function ts(){ var d=new Date(); return d.toLocaleTimeString(); }
-      function trim(s, n){ s=String(s||''); return s.length>n? s.slice(0,n)+'…('+s.length+')' : s; }
-      window.__dbg = function(label, obj){
-        if(!panel) init();
+      function trim(s,n){ s=String(s||''); return s.length>n? s.slice(0,n)+'…('+s.length+')' : s; }
+      window.__dbg = function(label,obj){
+        panel = panel || document.getElementById('__dbgPanel');
+        out   = out   || document.getElementById('__dbgOut');
+        btn   = btn   || document.getElementById('__dbgBtn');
+        if(btn && !btn.__bind){ btn.__bind=true; btn.addEventListener('click', function(){ panel.style.display = panel.style.display==='block'?'none':'block'; }); }
         if(!out) return;
-        var j; try { j = typeof obj==='string'? obj : JSON.stringify(obj, null, 2); } catch(e){ j = String(obj); }
-        var line = "["+ts()+"] "+label+"\n"+trim(j, 20000)+"\n\n";
-        out.textContent = line + out.textContent;
+        var j; try{ j = typeof obj==='string'? obj : JSON.stringify(obj,null,2); }catch(e){ j = String(obj); }
+        out.textContent = "["+ts()+"] "+label+"\n"+trim(j,20000)+"\n\n" + out.textContent;
       };
-      init();
     })();
 
     /* ========================= 배너 ========================= */
@@ -194,7 +191,6 @@
       }
       createSideFloat('left', ADMIN_BANNERS.left);
       createSideFloat('right', ADMIN_BANNERS.right);
-      var n = document.getElementById('noticeArea'); if(n) n.textContent = ADMIN_NOTICE_TEXT || '';
     }
     function createSideFloat(side, cfg){
       var wrap = document.getElementById('float-'+side);
@@ -208,16 +204,17 @@
       }
     }
 
-    /* ========================= 유틸/옵션 파서 ========================= */
-    function setStatus(t){ var s=$('#status'); if(s) s.textContent = t; }
-    function parseItemLevel(raw){ if(!raw) return 0; var n=parseFloat(String(raw).replace(/[^0-9.]/g,'')); return isNaN(n)?0:n; }
+    /* ========================= 유틸 ========================= */
+    function setStatus(t){ var s=document.getElementById('status'); if(s) s.textContent=t; }
     function esc(s){ return String(s||'').replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m];}); }
     function stripTags(s){ return String(s||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(); }
-    function escNl(s){ return esc(s).replace(/\n/g,'<br>'); }
+    function pill(t){return '<span class="gem-pill" style="padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.06);font-size:12px">'+esc(t)+'</span>'}
+    function gradeClass(g){ g=String(g||''); if(/고대/.test(g))return'ancient'; if(/유물/.test(g))return'relic'; if(/전설/.test(g))return'legendary'; if(/영웅/.test(g))return'epic'; if(/희귀/.test(g))return'rare'; if(/고급/.test(g))return'uncommon'; return'common'; }
+    function gradeColor(c){return{ancient:'#d4af37',relic:'#f44336',legendary:'#ffa726',epic:'#b388ff',rare:'#64b5f6',uncommon:'#66bb6a',common:'#9aa6b2'}[c||'common']||'#9aa6b2'}
 
     function flattenTooltip(tooltipRaw){
       if(!tooltipRaw) return '';
-      var j = {}; try{ j = JSON.parse(String(tooltipRaw).replace(/\\"/g,'"')); }catch(_){ return ''; }
+      var j={}; try{ j = JSON.parse(String(tooltipRaw).replace(/\\"/g,'"')); }catch(_){ return ''; }
       var pick=[], k, v;
       for(k in j){
         v = j[k] && j[k].value;
@@ -231,29 +228,22 @@
       }
       return pick.filter(Boolean).join('\n');
     }
-
     function extractAffixOptions(tooltipRaw){
       var flat = flattenTooltip(tooltipRaw);
       return flat
         .split(/\n|<br>|<BR>/)
-        .map(function(s){ return s.replace(/&nbsp;/g,' ').trim(); })
+        .map(function(s){ return stripTags(String(s).replace(/&nbsp;/g,' ').trim()); })
         .filter(Boolean)
         .filter(function(s){ return /^ *(상|중|하)\b/.test(stripTags(s)); })
         .map(function(s){ return stripTags(s); });
     }
-
-    function gradeClass(g){ g=String(g||''); if(/고대/.test(g))return'ancient'; if(/유물/.test(g))return'relic'; if(/전설/.test(g))return'legendary'; if(/영웅/.test(g))return'epic'; if(/희귀/.test(g))return'rare'; if(/고급/.test(g))return'uncommon'; return'common'; }
-    function gradeColor(c){return{ancient:'#d4af37',relic:'#f44336',legendary:'#ffa726',epic:'#b388ff',rare:'#64b5f6',uncommon:'#66bb6a',common:'#9aa6b2'}[c||'common']||'#9aa6b2'}
-    function pill(t){return '<span class="gem-pill">'+esc(t)+'</span>'}
-
     function parseAccessoryDetails(tooltip){
       var L=flattenTooltip(tooltip).split(/\n|<br>|<BR>/i).map(function(s){return stripTags(String(s).replace(/&nbsp;/g,' ').trim())}).filter(Boolean);
       var J=L.join(' ');
       var itemLevel=(J.match(/아이템\s*레벨\s*([0-9,]+)/i)||[])[1];
       var tier=(J.match(/티어\s*([0-9])/i)||[])[1];
       var quality=(J.match(/품질\s*([0-9]{1,3})/i)||[])[1];
-      var base={};
-      L.forEach(function(l){ var m=l.match(/(힘|지능|민첩|체력)\s*\+([0-9,]+)/); if(m) base[m[1]]=Number(m[2].replace(/,/g,'')); });
+      var base={}; L.forEach(function(l){ var m=l.match(/(힘|지능|민첩|체력)\s*\+([0-9,]+)/); if(m) base[m[1]]=Number(m[2].replace(/,/g,'')); });
       var options=L.filter(function(l){return /^(상|중|하)\s/.test(l)}).map(function(l){return{rank:l.slice(0,1),text:l.replace(/^(상|중|하)\s*/,'').trim()};});
       return {
         itemLevel:itemLevel?Number(itemLevel.replace(/,/g,'')):null,
@@ -262,7 +252,6 @@
         base:base, options:options
       };
     }
-
     function parseStoneDetails(tooltip){
       var txt=stripTags(flattenTooltip(tooltip));
       var names=['원한','바리케이드','결투의 대가','예리한 둔기','저주받은 인형','아드레날린','급소 타격','안정된 상태','공격력 감소','공격 속도 감소','이동 속도 감소','기습의 대가','질량 증가'];
@@ -270,7 +259,6 @@
       while((m=re.exec(txt))) pick.push({name:m[1],value:Number(m[2])});
       return { lines: pick };
     }
-
     function parseBraceletDetails(tooltip){
       var L=flattenTooltip(tooltip).split(/\n|<br>|<BR>/i).map(function(s){return stripTags(String(s).replace(/&nbsp;/g,' ').trim())}).filter(Boolean);
       var o=[]; L.forEach(function(l){
@@ -281,11 +269,7 @@
       return { options:o };
     }
 
-    /* ========================= 네트워크 유틸 ========================= */
-    function setStatus(t){ var s=$('#status'); if(s) s.textContent=t; }
-    function sleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
-
-    /* ========================= 캐릭터 API: 통합 프록시 사용 ========================= */
+    /* ========================= API 호출 ========================= */
     async function fetchChar(name){
       var url = API_BASE + '/character?name=' + encodeURIComponent(name) + '&_t=' + Date.now();
       try{
@@ -293,16 +277,11 @@
         var res = await fetch(url, { mode:'cors', cache:'no-store' });
         var text = await res.text();
         __dbg('RES ' + name + ' ('+res.status+')', text);
+        if (!res.ok) throw new Error('API '+res.status+' '+text);
 
-        if (!res.ok) {
-          var err; try{ err = JSON.parse(text); }catch{ err = { error:text }; }
-          throw new Error('API ' + res.status + ' ' + (err && err.error || ''));
-        }
+        var raw = JSON.parse(text);  // {ok:true, data:{...}}
+        var d = raw.data || raw;
 
-        var raw = JSON.parse(text);        // { ok:true, data:{...} }
-        var d = (raw && raw.data) ? raw.data : raw;
-
-        // 기존 렌더 파이프와 호환되도록 표준화
         return mapArmory({
           ArmoryProfile: {
             CharacterName: d.name, ServerName: d.server, CharacterClassName: d.cls,
@@ -315,13 +294,11 @@
           }) },
           _cards: d.cards, _gems: d.gems
         });
-      }catch(err){
-        __dbg('ERR ' + name, String(err && err.message || err));
+      }catch(e){
+        __dbg('ERR ' + name, String(e&&e.message||e));
         return mockChar(name);
       }
     }
-
-    // 강한 폴백 매핑 + 장비/부옵/악세/팔찌/스톤/초월/엘릭서 파싱
     function mapArmory(raw){
       raw = raw || {};
       var p = raw.ArmoryProfile || {};
@@ -332,7 +309,6 @@
         var lv = e && e.Level ? (' Lv.'+e.Level) : '';
         return (nm + lv).trim();
       });
-
       function metaFromTooltip(tooltip,name,grade){
         var flat=(flattenTooltip(tooltip)+' '+(name||'')+' '+(grade||'')).replace(/\s+/g,' ');
         function one(re){ var m=re.exec(flat); return m? Number(m[1]) : null; }
@@ -348,7 +324,6 @@
 
         return { enhance:enhance, upper:upper, step:step, tier:tier, transcend:trans, elixir:elix };
       }
-
       function parseItemLevelNum(x){ if(!x) return 0; var n=parseFloat(String(x).replace(/[^0-9.]/g,'')); return isNaN(n)?0:n; }
 
       var mapped = {
@@ -390,7 +365,6 @@
       };
       return mapped;
     }
-
     function mockChar(name){
       var ilv = 1500 + Math.floor(Math.random()*300);
       return {
@@ -400,21 +374,20 @@
       };
     }
 
-    /* ========================= 그리드/상세 렌더 ========================= */
+    /* ========================= 그리드 렌더 ========================= */
     function renderSkeleton(){
       var html = '';
       for(var i=0;i<ADMIN_CHARACTERS.length;i++){
         html += '<div class="card-char">'
-          + '<div class="skeleton" style="width:100%;aspect-ratio:1/1;border-radius:12px"></div>'
-          + '<div class="skeleton" style="height:16px;border-radius:8px;margin-top:8px"></div>'
-          + '<div class="skeleton" style="height:12px;border-radius:6px;margin-top:6px;opacity:.6"></div>'
+          + '<div style="width:100%;aspect-ratio:1/1;border-radius:12px;background:linear-gradient(90deg, rgba(255,255,255,.06), transparent);position:relative;overflow:hidden"></div>'
+          + '<div style="height:16px;border-radius:8px;margin-top:8px;background:rgba(255,255,255,.06)"></div>'
+          + '<div style="height:12px;border-radius:6px;margin-top:6px;background:rgba(255,255,255,.06);opacity:.6"></div>'
           + '</div>';
       }
-      $('#charGrid').innerHTML = html;
+      document.getElementById('charGrid').innerHTML = html;
     }
-
     function renderGrid(list){
-      var wrap = $('#charGrid'), i, it, avatar, html='';
+      var wrap = document.getElementById('charGrid'), i, it, avatar, html='';
       list.sort(function(a,b){ return (b.itemLevelNum||0) - (a.itemLevelNum||0); });
       for(i=0;i<list.length;i++){
         it = list[i];
@@ -436,93 +409,108 @@
       setStatus('표시: '+list.length+'개 · 정렬: 아이템 레벨');
     }
 
+    /* ========================= 상세 렌더(스케치 반영) ========================= */
     function openDetail(d){
-      $('#dAvatar').src = d.avatar || '';
-      $('#dName').textContent = d.name;
-      $('#dServer').textContent = '서버: '+d.server;
-      $('#dCls').textContent = d.cls||'-';
-      $('#dIlv').textContent = d.itemLevelText||'-';
-      if(d.combatPower && d.combatPower !== '-'){ $('#dCpWrap').style.display='inline-flex'; $('#dCp').textContent = d.combatPower; } else { $('#dCpWrap').style.display='none'; }
-
-      var g = d.gems || {}, gs = [];
-      if(g.avgLevel) gs.push('보석 평균 '+g.avgLevel);
-      if(g.counts) gs.push((g.counts.damage||0)+'뎀 '+(g.counts.cooldown||0)+'쿨');
-      $('#dGemSum').innerHTML = gs.length? gs.map(pill).join(' ') : '<span class="small">보석 정보 없음</span>';
-
-      var enWrap=$('#dEngr'); enWrap.innerHTML='';
-      (d.engraves||[]).forEach(function(x){ var sp=document.createElement('span'); sp.className='chip'; sp.textContent=x; enWrap.appendChild(sp); });
-
-      var eqWrap = $('#dEquip'); eqWrap.innerHTML='';
-      (d.equipment||[]).forEach(function(e){
-        var c = gradeColor(e.gradeClass);
-        var m = e.meta || {};
-        var enhance = m.enhance? ('+'+m.enhance) : '', upper = m.upper ? (' x'+m.upper) : '';
-        var right = [m.step? (m.step+'단계') : '', m.tier || ''].filter(Boolean).join('<br>');
-        var qhtml = (typeof e.quality==='number') ? (
-          '<div class="qpill">품질 <b>'+e.quality+'</b>'
-          + '<div style="height:6px;border-radius:999px;background:rgba(255,255,255,.08);margin-left:8px;flex:1;overflow:hidden">'
-          + '<div style="height:6px;width:'+Math.max(0,Math.min(100,e.quality))+'% ;background:linear-gradient(90deg,#3fb950,#f2cc60,#ff6b6b)"></div>'
-          + '</div></div>'
-        ) : '';
-
-        var extra = '';
-        if(e.acc){
-          var base=e.acc.base||{}; var baseHtml = Object.keys(base).length? ('<div class="small" style="margin:6px 0 2px">기본: '+Object.entries(base).map(function(kv){return kv[0]+' +'+kv[1].toLocaleString()}).join(' · ')+'</div>') : '';
-          var pills=[]; if(typeof e.acc.quality==='number') pills.push('품질 '+e.acc.quality); if(e.acc.itemLevel) pills.push('Lv.'+e.acc.itemLevel); if(e.acc.tier) pills.push('T'+e.acc.tier);
-          var opts=(e.acc.options||[]).map(function(op){var g=op.rank==='상'?'orange':op.rank==='중'?'purple':'blue';return '<div class="opt-line"><span class="tag '+g+'">'+op.rank+'</span><span class="small">'+esc(op.text)+'</span></div>';}).join('');
-          extra = baseHtml + (pills.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">'+pills.map(pill).join('')+'</div>':'') + (opts||'<span class="small">부여 옵션 없음</span>');
-        }else if(e.stone){
-          var s=e.stone.lines||[];
-          extra = s.length ? s.map(function(it){return '<div class="opt-line"><span class="tag purple">석</span><span class="small">'+esc(it.name)+' '+((it.value>=0?'+':'')+it.value)+'</span></div>'}).join('') : '<span class="small">스톤 정보 없음</span>';
-        }else if(e.bracelet){
-          var bx=e.bracelet.options||[];
-          extra = bx.length ? bx.map(function(it){return '<div class="opt-line"><span class="tag blue">팔</span><span class="small">'+esc(it.stat)+' +'+esc(it.value)+'</span></div>'}).join('') : '<span class="small">팔찌 옵션 없음</span>';
-        }
-
-        var linesHtml = (e.lines||[]).map(function(line){
-          var g=line.indexOf('상')===0?'orange':(line.indexOf('중')===0?'purple':'blue');
-          var text=line.replace(/^(상|중|하)\s*/, '');
-          return '<div class="opt-line"><span class="tag '+g+'">'+line.charAt(0)+'</span><span class="small">'+esc(text)+'</span></div>';
-        }).join('');
-
-        var row=document.createElement('div'); row.className='equip-row'; row.style.borderLeft='4px solid '+c;
-        row.innerHTML =
-          '<img src="'+(e.icon||'https://via.placeholder.com/42')+'" alt="" style="width:42px;height:42px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.12)">' +
-          '<div>' +
-            '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:2px">' +
-              '<span class="badge" style="color:'+c+'">'+esc(e.grade||'')+'</span>' +
-              (enhance?'<span class="badge">'+esc(enhance+(upper?(' '+upper):''))+'</span>':'') +
-              '<span style="font-weight:800;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(e.name||'')+'</span>' +
-            '</div>' +
-            (qhtml?'<div style="display:flex;align-items:center;gap:6px;margin-top:4px">'+qhtml+'</div>':'') +
-            '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">'+
-              (m && m.transcend ? pill('초월 '+(m.transcend.avg?('Lv.'+m.transcend.avg):'')+(m.transcend.total?(' ×'+m.transcend.total):'')) : '') +
-              (m && m.elixir ? pill('엘릭서 '+(m.elixir.level?('Lv.'+m.elixir.level):(m.elixir.percent?m.elixir.percent+'%':''))) : '') +
-            '</div>' +
-            '<div class="opt-lines">'+ (extra || linesHtml || '<span class="small">부여 옵션 없음</span>') +'</div>' +
-          '</div>' +
-          '<div class="small" style="text-align:right;min-width:64px">'+right+'</div>';
-        eqWrap.appendChild(row);
-      });
-
-      var cw = $('#dCards'); cw.innerHTML='';
-      var c = d.cards || {};
-      if((c.list||[]).length){
-        c.list.forEach(function(it){
-          var s=document.createElement('div'); s.className='card-slot';
-          s.innerHTML='<img src="'+(it.icon||'https://via.placeholder.com/68x94')+'"><span class="small">x'+(it.awakening||0)+'</span>';
-          cw.appendChild(s);
-        });
-        var meta=[]; if(c.setName) meta.push(c.setName+(c.setCount?' '+c.setCount+'세트':'')); if(c.awakeningTotal!=null) meta.push('총 '+c.awakeningTotal+'각');
-        if(meta.length){ var d2=document.createElement('div'); d2.className='small'; d2.style.marginTop='6px'; d2.textContent=meta.join(' · '); cw.appendChild(d2); }
-      }else{
-        cw.innerHTML='<span class="small">카드 정보 없음</span>';
+      document.getElementById('dAvatar').src = d.avatar || '';
+      document.getElementById('dName').textContent = d.name;
+      document.getElementById('dServer').textContent = '서버: '+(d.server||'-');
+      document.getElementById('dCls').textContent = d.cls||'-';
+      document.getElementById('dIlv').textContent = d.itemLevelText||'-';
+      if(d.combatPower && d.combatPower !== '-'){
+        document.getElementById('dCpWrap').style.display='inline-flex';
+        document.getElementById('dCp').textContent = d.combatPower;
+      } else {
+        document.getElementById('dCpWrap').style.display='none';
       }
 
-      $('#detailModal').classList.add('on');
+      // 각인 박스
+      var engr = d.engraves||[];
+      var engrBox = document.getElementById('engrBox'); engrBox.innerHTML = '';
+      if(!engr.length){ engrBox.innerHTML = '<span class="small">각인 정보 없음</span>'; }
+      else { engr.forEach(function(x){ var sp=document.createElement('span'); sp.className='chip'; sp.textContent=x; engrBox.appendChild(sp); }); }
+
+      // 장비 리스트
+      var list = d.equipment || [];
+      var wrap = document.getElementById('equipList'); wrap.innerHTML = '';
+      function isAcc(t,n){ var s=(t||'')+' '+(n||''); return /(목걸이|귀걸이|반지)/.test(s); }
+      function pct(x){ x = Math.max(0, Math.min(100, Number(x)||0)); return x; }
+
+      list.forEach(function(e){
+        var row=document.createElement('div'); row.className='equip-item';
+        var slot=document.createElement('div'); slot.className='slot-chip '+(isAcc(e.type,e.name)?'slot-acc':'slot-gear');
+        var icon=document.createElement('img'); icon.src = e.icon || 'https://via.placeholder.com/42'; icon.style.cssText='width:42px;height:42px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.12)';
+
+        var mid=document.createElement('div');
+        var title='<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px">'
+                + '<span class="badge" style="background:rgba(255,255,255,.06);color:'+gradeColor(gradeClass(e.grade))+'">'+esc(e.grade||'')+'</span>'
+                + '<b>'+esc(e.name||'')+'</b>'
+                + (e.meta && (e.meta.enhance||e.meta.upper) ? '<span class="badge">+'+(e.meta.enhance||0)+(e.meta.upper?(' x'+e.meta.upper):'')+'</span>' : '')
+                + '</div>';
+        var opts='';
+        if(e.acc){
+          var pills=[], a=e.acc;
+          if(typeof a.quality==='number') pills.push('품질 '+a.quality);
+          if(a.itemLevel) pills.push('Lv.'+a.itemLevel);
+          if(a.tier) pills.push('T'+a.tier);
+          if(pills.length) opts += '<div class="opt-mini">'+pills.map(function(t){return '<span class="gem-pill" style="padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.06);font-size:12px">'+esc(t)+'</span>'}).join(' ')+'</div>';
+
+          if(a.options && a.options.length){
+            opts += a.options.map(function(op){
+              var g=op.rank==='상'?'orange':op.rank==='중'?'purple':'blue';
+              return '<div class="opt-line"><span class="tag '+g+'">'+op.rank+'</span><span class="small">'+esc(op.text)+'</span></div>';
+            }).join('');
+          }else{
+            opts += '<div class="small">부여 옵션 없음</div>';
+          }
+        }else{
+          var lines = e.lines||[];
+          opts += lines.length? lines.map(function(line){
+            var g=line.indexOf('상')===0?'orange':(line.indexOf('중')===0?'purple':'blue');
+            return '<div class="opt-line"><span class="tag '+g+'">'+line.charAt(0)+'</span><span class="small">'+esc(line.replace(/^(상|중|하)\s*/,''))+'</span></div>';
+          }).join('') : '<div class="small">부여 옵션 없음</div>';
+        }
+        mid.innerHTML = title + opts;
+
+        var right=document.createElement('div');
+        var qhtml = (typeof e.quality==='number')
+          ? ('<div class="qbar"><i style="width:'+pct(e.quality)+'%;background:linear-gradient(90deg,#3fb950,#f2cc60,#ff6b6b)"></i></div>'
+            + '<div class="small" style="margin-top:4px;text-align:center">'+e.quality+'</div>')
+          : '<div class="small" style="text-align:center;color:var(--muted)">-</div>';
+        var metaRight = [];
+        if(e.meta && e.meta.step) metaRight.push(e.meta.step+'단계');
+        if(e.meta && e.meta.tier) metaRight.push(e.meta.tier);
+        right.innerHTML = qhtml + (metaRight.length?('<div class="small" style="margin-top:6px;text-align:center">'+metaRight.join('<br>')+'</div>'):'');
+        
+        row.appendChild(slot);
+        row.appendChild(icon);
+        row.appendChild(mid);
+        row.appendChild(right);
+        wrap.appendChild(row);
+      });
+
+      // 보석 도트
+      var gemRow = document.getElementById('gemRow'); gemRow.innerHTML='';
+      var g = d.gems || {}; var n = Math.max((g.counts?(g.counts.damage+g.counts.cooldown):0), 11);
+      for(var i=0;i<n;i++){ var dot=document.createElement('div'); dot.className='gem-dot'; gemRow.appendChild(dot); }
+      if(g.avgLevel){ var info=document.createElement('span'); info.className='small'; info.style.marginLeft='6px'; info.textContent='평균 Lv. '+g.avgLevel; gemRow.appendChild(info); }
+
+      // 카드 행
+      var cardsRow = document.getElementById('cardsRow'); cardsRow.innerHTML='';
+      var cs = d.cards || {};
+      if((cs.list||[]).length){
+        cs.list.forEach(function(it){
+          var c=document.createElement('div'); c.className='card-item';
+          c.innerHTML = '<img src="'+(it.icon||'https://via.placeholder.com/72x100')+'"><span class="small">x'+(it.awakening||0)+'</span>';
+          cardsRow.appendChild(c);
+        });
+      }else{
+        cardsRow.innerHTML = '<span class="small">카드 정보 없음</span>';
+      }
+
+      document.getElementById('detailModal').classList.add('on');
     }
 
-    /* ========================= 데이터 갱신 흐름 ========================= */
+    /* ========================= 데이터 흐름 ========================= */
     async function refreshAll(){
       try{
         setStatus(navigator.onLine? '전체 불러오는 중...' : '오프라인: 캐시/모의 데이터 표시');
@@ -533,12 +521,12 @@
           list.push(results[i].status==='fulfilled' ? results[i].value : mockChar(ADMIN_CHARACTERS[i]));
         }
         renderGrid(list);
-        try{ localStorage.setItem('gridCache_v11', JSON.stringify(list)); }catch(_){}
+        try{ localStorage.setItem('gridCache_v12', JSON.stringify(list)); }catch(_){}
         setStatus('완료');
       }catch(err){
         __dbg('refreshAll ERR', String(err && err.message || err));
         try{
-          var cache = localStorage.getItem('gridCache_v11');
+          var cache = localStorage.getItem('gridCache_v12');
           if(cache){ renderGrid(JSON.parse(cache)); setStatus('오프라인 캐시 표시'); return; }
         }catch(_){}
         var list2 = ADMIN_CHARACTERS.map(mockChar);
@@ -551,9 +539,9 @@
     document.addEventListener('DOMContentLoaded', function(){
       loadBanners();
       refreshAll();
-      $('#refreshAll').addEventListener('click', refreshAll);
-      $('#closeDetail').addEventListener('click', function(){ $('#detailModal').classList.remove('on'); });
-      $('#detailModal').addEventListener('click', function(e){ if(e.target.id==='detailModal') $('#detailModal').classList.remove('on'); });
+      document.getElementById('refreshAll').addEventListener('click', refreshAll);
+      document.getElementById('closeDetail').addEventListener('click', function(){ document.getElementById('detailModal').classList.remove('on'); });
+      document.getElementById('detailModal').addEventListener('click', function(e){ if(e.target.id==='detailModal') document.getElementById('detailModal').classList.remove('on'); });
       setInterval(refreshAll, AUTO_MS);
       window.addEventListener('online',  function(){ setStatus('온라인 복구: 재동기화 중...'); refreshAll(); });
       window.addEventListener('offline', function(){ setStatus('오프라인: 캐시/모의 데이터 표시'); });
