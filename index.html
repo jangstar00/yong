@@ -1,568 +1,213 @@
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>lostamen — 캐릭터 보드</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
-  <style>
-    :root{ --bg:#0b0f14; --panel:#0f1720; --muted:#9aa6b2; --gold:#d4af37; --glass:rgba(255,255,255,.04); --radius:16px; --radius-sm:12px; --shadow:0 6px 18px rgba(0,0,0,.5) }
-    *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0;padding:clamp(10px,2.8vw,22px);font-family:'Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#071016 0%, #07131a 60%);color:#e6eef6;line-height:1.55}
-    .container{max-width:1000px;margin:0 auto;display:grid;gap:16px}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));border-radius:var(--radius);padding:16px;border:1px solid rgba(255,255,255,.06);box-shadow:var(--shadow)}
-    .small{font-size:12px;color:var(--muted)}
-    button{background:transparent;border:1px solid rgba(255,255,255,.12);padding:10px 14px;border-radius:12px;color:var(--gold);cursor:pointer}
-    button:active{transform:translateY(1px)}
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>lostamen — 캐릭터 보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0f14;--panel:#0f1720;--muted:#9aa6b2;--gold:#d4af37;--glass:rgba(255,255,255,.04);--radius:16px;--shadow:0 6px 18px rgba(0,0,0,.5)}
+*{box-sizing:border-box}body{margin:0;padding:clamp(10px,2.8vw,22px);font-family:'Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#071016,#07131a 60%);color:#e6eef6}
+.container{max-width:1000px;margin:0 auto;display:grid;gap:16px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));border-radius:16px;padding:16px;border:1px solid rgba(255,255,255,.06);box-shadow:var(--shadow)}
+.small{font-size:12px;color:var(--muted)} .name{margin:8px 0 2px;font-weight:900;color:var(--gold)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px} @media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}}
+.card-char{background:var(--panel);border-radius:16px;padding:12px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.card-char:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.5)}
+.card-char img{width:100%;aspect-ratio:1/1;border-radius:12px;object-fit:cover;background:#061016}
+.row{display:flex;justify-content:space-between;margin-top:6px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:9999}
+.modal.on{display:flex} .panel{max-width:980px;width:100%;background:#0e141c;border:1px solid rgba(255,255,255,.08);border-radius:16px;display:grid;grid-template-columns:320px 1fr;max-height:92vh;overflow:auto}
+.panel .left,.panel .right{padding:14px}
+.equip{display:grid;gap:10px}.equip-row{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:10px}
+.badge{display:inline-block;padding:2px 6px;border-radius:6px;font-weight:800;font-size:11px;background:rgba(255,255,255,.08)}
+.qpill{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:999px;font-size:12px;background:rgba(255,255,255,.06)}
+.opt-lines{display:grid;gap:6px}.opt-line{display:flex;gap:8px;align-items:flex-start}
+.tag{display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800}
+.tag.blue{background:rgba(77,171,245,.18);color:#81c9ff}.tag.purple{background:rgba(162,128,255,.18);color:#c7b5ff}.tag.orange{background:rgba(255,173,80,.18);color:#ffd29a}
+.chip{background:linear-gradient(90deg,rgba(212,175,55,.16),transparent);padding:3px 8px;border-radius:999px;color:#d4af37;font-weight:800;font-size:12px}
+.gem-pill{padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.06);font-size:12px}
+.cards{display:flex;gap:8px;flex-wrap:wrap}.card-slot{width:68px}.card-slot img{width:68px;height:94px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.12)}
+.debug-btn{position:fixed;right:12px;bottom:12px;z-index:99999;background:#1d2633;border:1px solid rgba(255,255,255,.2);color:#ffd58a;border-radius:10px;padding:8px 10px;font-size:12px}
+.debug-panel{position:fixed;right:12px;bottom:52px;z-index:99999;width:min(92vw,520px);max-height:60vh;overflow:auto;background:#0c121a;border:1px solid rgba(255,255,255,.25);border-radius:10px}
+.debug-panel pre{margin:0;padding:10px;white-space:pre-wrap;word-break:break-all;font-size:12px;color:#cfe1ff}
+.skeleton{position:relative;overflow:hidden;background:linear-gradient(90deg,rgba(255,255,255,.06),transparent)}
+.skeleton::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);animation:shimmer 1.4s infinite}
+</style></head><body>
+<div class="container">
+  <header style="display:flex;align-items:baseline;gap:8px"><h2 style="margin:0;color:var(--gold)">lostamen</h2><span class="small">다중 캐릭터 보드</span><span class="small" id="status" style="margin-left:auto">준비됨 · 1시간 자동 갱신</span></header>
+  <section class="card" id="chars"><div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><button id="refreshAll">전체 갱신</button><span class="small" style="margin-left:auto">정렬: 아이템 레벨(내림차순)</span></div><div id="charGrid" class="grid"></div></section>
+</div>
 
-    .top-banner,.bottom-banner{background:var(--glass);border-radius:var(--radius-sm);min-height:110px;display:flex;align-items:center;justify-content:center;overflow:hidden}
-    .top-banner img,.bottom-banner img{width:100%;height:100%;object-fit:cover}
-
-    .side-float{position:fixed; top:160px; width:300px; z-index:50; background:rgba(0,0,0,.12); border-radius:12px; overflow:hidden}
-    .side-float.left{left:16px}.side-float.right{right:16px}
-    @media (max-width:1200px){ .side-float{display:none} }
-
-    .main{display:grid;grid-template-columns:1fr;gap:16px}
-    .controls{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-    .card-char{background:var(--panel);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease}
-    .card-char:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.5)}
-    .card-char img{width:100%;aspect-ratio:1/1;border-radius:12px;object-fit:cover;background:#061016}
-    .name{margin:8px 0 2px;font-weight:900;color:var(--gold)}
-    .meta{font-size:12px;color:var(--muted)}
-    .row{display:flex;justify-content:space-between;margin-top:6px}
-
-    .notice{background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px}
-    .post-list{display:grid;gap:10px}
-    .post{background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);border:1px solid rgba(255,255,255,.06);padding:12px;border-radius:12px}
-    .post header{display:flex;justify-content:space-between;align-items:center}
-    .post .meta{font-size:12px;color:var(--muted)}
-    .danger{border-color:rgba(255,0,0,.25);color:#ffb3b3}
-
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:9999}
-    .modal.on{display:flex}
-    .panel{max-width:980px;width:100%;background:#0e141c;border:1px solid rgba(255,255,255,.08);border-radius:16px;display:grid;grid-template-columns:320px 1fr;max-height:92vh;overflow:auto}
-    .panel .left{padding:14px;border-right:1px solid rgba(255,255,255,.06)}
-    .panel .right{padding:14px}
-    .closeX{position:sticky;left:100%;top:10px;background:transparent;border:0;color:#cfd8e3;font-size:22px;cursor:pointer}
-
-    .equip{display:grid;gap:10px}
-    .equip-row{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:10px}
-    .badge{display:inline-block;padding:2px 6px;border-radius:6px;font-weight:800;font-size:11px;background:rgba(255,255,255,.08)}
-    .qpill{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:999px;font-size:12px;background:rgba(255,255,255,.06)}
-    .opt-lines{display:grid;gap:6px}.opt-line{display:flex;gap:8px;align-items:flex-start}
-    .tag{display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800}
-    .tag.blue{background:rgba(77,171,245,.18);color:#81c9ff}
-    .tag.purple{background:rgba(162,128,255,.18);color:#c7b5ff}
-    .tag.orange{background:rgba(255,173,80,.18);color:#ffd29a}
-    .engr{display:flex;gap:6px;flex-wrap:wrap}
-    .chip{background:linear-gradient(90deg, rgba(212,175,55,.16), transparent);padding:3px 8px;border-radius:999px;color:#d4af37;font-weight:800;font-size:12px}
-    .divider{height:1px;background:rgba(255,255,255,.08);margin:10px 0}
-    .gems{display:flex;gap:8px;flex-wrap:wrap}
-    .gem-pill{padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.06);font-size:12px}
-    .cards{display:flex;gap:8px;flex-wrap:wrap}
-    .card-slot{width:68px}.card-slot img{width:68px;height:94px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.12)}
-    .awake{display:block;text-align:center;font-size:12px;margin-top:2px;color:#ffd58a}
-
-    .skeleton{position:relative;overflow:hidden;background:linear-gradient(90deg, rgba(255,255,255,.06), transparent)}
-    .skeleton::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);animation:shimmer 1.4s infinite}
-    @keyframes shimmer{100%{transform:translateX(100%)}}
-
-    @media (max-width:1100px){ .grid{grid-template-columns:repeat(3,1fr)} .panel{grid-template-columns:1fr} .panel .left{border-right:0;border-bottom:1px solid rgba(255,255,255,.06)} }
-    @media (max-width:760px){ .grid{grid-template-columns:repeat(2,1fr)} .card{padding:12px} .name{font-size:15px} }
-    @media (max-width:520px){ .grid{grid-template-columns:1fr} .top-banner,.bottom-banner{min-height:80px} .controls{gap:6px} button{padding:8px 12px} }
-    @media (max-width:600px){ .card-char img{display:none} }
-
-    .debug-btn{position:fixed;right:12px;bottom:12px;z-index:99999;background:#1d2633;border:1px solid rgba(255,255,255,.2);color:#ffd58a;border-radius:10px;padding:8px 10px;font-size:12px;cursor:pointer}
-    .debug-panel{position:fixed;right:12px;bottom:52px;z-index:99999;width:min(92vw,520px);max-height:60vh;overflow:auto;background:#0c121a;border:1px solid rgba(255,255,255,.25);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
-    .debug-panel header{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#111926;border-bottom:1px solid rgba(255,255,255,.12)}
-    .debug-panel header .title{font-weight:800;color:#ffd58a;font-size:12px}
-    .debug-panel header .actions{display:flex;gap:6px}
-    .debug-panel pre{margin:0;padding:10px;white-space:pre-wrap;word-break:break-all;font-size:12px;line-height:1.45;color:#cfe1ff}
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <div style="display:flex;align-items:baseline;gap:8px">
-        <h2 style="margin:0;color:var(--gold)">lostamen</h2>
-        <span class="small">다중 캐릭터 보드</span>
+<div id="detailModal" class="modal"><div class="panel">
+  <div class="left">
+    <button id="closeDetail" style="position:sticky;left:100%;top:10px;background:transparent;border:0;color:#cfd8e3;font-size:22px;cursor:pointer">✕</button>
+    <img id="dAvatar" alt="" style="width:100%;border-radius:12px;object-fit:cover;aspect-ratio:1/1;background:#061016"/>
+    <div style="margin-top:10px">
+      <div id="dName" style="font-weight:900;color:var(--gold)">-</div>
+      <div id="dServer" class="small">-</div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <div class="chip">직업 <span id="dCls">-</span></div>
+        <div class="chip">아이템 레벨 <span id="dIlv">-</span></div>
+        <div class="chip" id="dCpWrap" style="display:none">전투력 <span id="dCp">-</span></div>
       </div>
-      <div style="margin-left:auto" class="small" id="status">준비됨 · 1시간 자동 갱신</div>
-    </header>
-
-    <section class="card top-banner" id="bn-top"></section>
-
-    <div class="main">
-      <section class="card" id="chars">
-        <div class="controls">
-          <button id="refreshAll">전체 갱신</button>
-          <span class="small" style="margin-left:auto">정렬: 아이템 레벨(내림차순)</span>
-        </div>
-        <div id="charGrid" class="grid"></div>
-      </section>
-
-      <section class="card" id="noticeBoard">
-        <div style="display:grid;grid-template-columns:1fr;gap:14px">
-          <div class="notice" id="noticeArea"></div>
-          <div>
-            <div style="display:grid;gap:8px;margin-bottom:10px">
-              <input id="author" type="text" placeholder="작성자" />
-              <textarea id="content" rows="3" placeholder="내용 (Ctrl/⌘+Enter 전송)"></textarea>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <input id="pwd" type="password" placeholder="비밀번호 (삭제 시 필요)" />
-                <label class="small" style="display:flex;align-items:center;gap:6px"><input id="pwdToggle" type="checkbox"/> 비밀번호 표시</label>
-                <span class="small" style="margin-left:auto">글은 서버에 저장됩니다</span>
-              </div>
-              <div style="display:flex;gap:8px;align-items:center"><button id="btnPost">등록</button></div>
-            </div>
-            <div id="posts" class="post-list"></div>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <section class="card bottom-banner" id="bn-bottom"></section>
-  </div>
-
-  <div id="detailModal" class="modal" aria-modal="true" role="dialog">
-    <div class="panel">
-      <div class="left">
-        <button class="closeX" id="closeDetail" aria-label="닫기">✕</button>
-        <img id="dAvatar" alt="avatar" style="width:100%;border-radius:12px;object-fit:cover;aspect-ratio:1/1;background:#061016"/>
-        <div style="margin-top:10px">
-          <div style="font-weight:900;color:var(--gold)" id="dName">-</div>
-          <div class="small" id="dServer">-</div>
-          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-            <div class="chip">직업 <span id="dCls">-</span></div>
-            <div class="chip">아이템 레벨 <span id="dIlv">-</span></div>
-            <div class="chip" id="dCpWrap" style="display:none">전투력 <span id="dCp">-</span></div>
-          </div>
-          <div class="divider"></div>
-          <div class="gems" id="dGemSum"></div>
-          <div class="divider"></div>
-          <div style="font-weight:800;color:var(--gold);margin-bottom:6px">각인</div>
-          <div class="engr" id="dEngr"></div>
-        </div>
-      </div>
-      <div class="right">
-        <div style="font-weight:800;color:var(--gold);margin-bottom:6px">장비 상세</div>
-        <div class="equip" id="dEquip"></div>
-        <div class="divider"></div>
-        <div style="font-weight:800;color:var(--gold);margin-bottom:6px">카드</div>
-        <div class="cards" id="dCards"></div>
-      </div>
+      <div style="height:10px"></div>
+      <div id="dGemSum" class="small"></div>
+      <div style="height:10px"></div>
+      <div style="font-weight:800;color:var(--gold);margin-bottom:6px">각인</div>
+      <div id="dEngr" style="display:flex;gap:6px;flex-wrap:wrap"></div>
     </div>
   </div>
-
-  <button id="__dbgBtn" class="debug-btn">디버그</button>
-  <div id="__dbgPanel" class="debug-panel" style="display:none">
-    <header>
-      <div class="title">API Debug</div>
-      <div class="actions">
-        <button id="__dbgClear" class="debug-btn" style="position:static;margin:0;">지우기</button>
-        <button id="__dbgClose" class="debug-btn" style="position:static;margin:0;">닫기</button>
-      </div>
-    </header>
-    <pre id="__dbgOut"></pre>
+  <div class="right">
+    <div style="font-weight:800;color:var(--gold);margin-bottom:6px">장비 상세</div>
+    <div id="dEquip" class="equip"></div>
+    <div style="height:10px"></div>
+    <div style="font-weight:800;color:var(--gold);margin-bottom:6px">카드</div>
+    <div id="dCards" class="cards"></div>
   </div>
+</div></div>
 
-  <script>
-    /* ========================= 관리자 설정 ========================= */
-    var ADMIN_CHARACTERS = ['장용노예2호','애이르','오바때끼','우니꼬쏠쏠','미드미네머너','달빛로드','신쿠fr','아장르카용나','데헌장파튀'].slice(0,20);
+<button id="__dbgBtn" class="debug-btn">디버그</button>
+<div id="__dbgPanel" class="debug-panel" style="display:none"><pre id="__dbgOut"></pre></div>
 
-    var ADMIN_BANNERS = {
-      top:    { img: 'https://jangstar00.github.io/yong/images/topbaner_tech.png',   link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
-      left:   { img: 'https://jangstar00.github.io/yong/images/leftbaner_tech.png',  link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
-      right:  { img: 'https://jangstar00.github.io/yong/images/rightbaner_tech.png', link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
-      bottom: { img: 'https://jangstar00.github.io/yong/images/topbaner_mj.png',     link: 'https://kloa.gg/characters/%EC%95%A0%EC%9D%B4%EB%A5%B4' }
-    };
-    var ADMIN_NOTICE_TEXT = '카제 대구리 따러가실 분 공대장: 김민지';
+<script>
+/* ===== 설정 ===== */
+const API_BASE = 'https://yong-qgw8.vercel.app/api'; // ← 네 Vercel 주소
+const NAMES = ['장용노예2호','애이르','오바때끼','우니꼬쏠쏠','미드미네머너','달빛로드','신쿠fr','아장르카용나','데헌장파튀'].slice(0,20);
+const CONCURRENCY = 3, AUTO_MS = 3600_000;
+const $ = s => document.querySelector(s);
+const statusEl = $('#status');
+const setStatus = t => statusEl && (statusEl.textContent = t);
 
-    var API_BASE = 'https://yong-qgw8.vercel.app/api';   // ← 네 배포 주소
-    var AUTO_MS  = 60*60*1000;
-    var CONCURRENCY = 3; // iOS Safari 안전선
+/* ===== 디버그 최소구성 ===== */
+(function(){const p=$('#__dbgPanel'),o=$('#__dbgOut'),b=$('#__dbgBtn');function t(){return new Date().toLocaleTimeString()}window.__dbg=(l,x)=>{try{o.textContent="["+t()+"] "+l+"\n"+(typeof x==='string'?x:JSON.stringify(x,null,2)).slice(0,20000)+"\n\n"+o.textContent}catch{}};if(b)b.onclick=()=>{p.style.display=p.style.display==='block'?'none':'block'};})();
 
-    var $ = s => document.querySelector(s);
+/* ===== 유틸 & 파서 ===== */
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+function stripTags(s){return String(s||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim()}
+function flattenTooltip(raw){ if(!raw) return ''; let j=raw; if(typeof raw==='string'){try{j=JSON.parse(raw.replace(/\\"/g,'"'))}catch{return ''}} let pick=[]; for(const k in j){const v=j[k]&&j[k].value; pick.push((v&&v.Element_000&&v.Element_000.contentStr)||(v&&v.Element_001&&v.Element_001.contentStr)||(v&&v.Element_002&&v.Element_002.contentStr)||(v&&v.Element_000)||(v&&v.leftStr)||(v&&v.rightStr)||(typeof v==='string'?v:'')||'')} return pick.filter(Boolean).join('\n')}
+function extractAffixOptions(t){return flattenTooltip(t).split(/\n|<br>|<BR>/i).map(s=>stripTags(String(s).replace(/&nbsp;/g,' ').trim())).filter(Boolean).filter(s=>/^(상|중|하)\b/.test(s))}
+function parseEquipMeta(name,grade,tooltip){const t=(flattenTooltip(tooltip)+' '+(name||'')+' '+(grade||'')).replace(/\s+/g,' ');const n=r=>{const m=r.exec(t); return m?Number(m[1]):null};const enhance=n(/\+ *(\d{1,2})/), upper=n(/x *(\d{1,2})/i), step=n(/(\d{1,2})\s*단계/), tierN=n(/티어\s*([0-9])/i); let tier=tierN?('T'+tierN):null; let trans=null; const a=t.match(/초월[^L]*Lv\.?\s*([0-9]{1,2})\D*×\D*([0-9]{1,3})/i); if(a) trans={avg:Number(a[1]), total:Number(a[2])}; let elixir=null; const b=t.match(/엘릭서[^0-9]*([0-9]{1,3}(?:\.[0-9]+)?)%/); if(b) elixir={percent:Number(b[1])}; if(!elixir){const c=t.match(/엘릭서[^L]*Lv\.?\s*([0-9]{1,2})/i); if(c) elixir={level:Number(c[1])}} return {enhance,upper,step,tier,transcend:trans,elixir}}
+function gradeClass(g){g=String(g||'');if(/고대/.test(g))return'ancient';if(/유물/.test(g))return'relic';if(/전설/.test(g))return'legendary';if(/영웅/.test(g))return'epic';if(/희귀/.test(g))return'rare';if(/고급/.test(g))return'uncommon';return'common'}
+function eqGradeColor(c){return{ancient:'#d4af37',relic:'#f44336',legendary:'#ffa726',epic:'#b388ff',rare:'#64b5f6',uncommon:'#66bb6a',common:'#9aa6b2'}[c||'common']||'#9aa6b2'}
+function parseAccessoryDetails(t){const L=flattenTooltip(t).split(/\n|<br>|<BR>/i).map(s=>stripTags(String(s).replace(/&nbsp;/g,' ').trim())).filter(Boolean);const J=L.join(' ');const itemLevel=(J.match(/아이템\s*레벨\s*([0-9,]+)/i)||[])[1];const tier=(J.match(/티어\s*([0-9])/i)||[])[1];const quality=(J.match(/품질\s*([0-9]{1,3})/i)||[])[1];const base={};L.forEach(l=>{const m=l.match(/(힘|지능|민첩|체력)\s*\+([0-9,]+)/);if(m) base[m[1]]=Number(m[2].replace(/,/g,''))});const options=L.filter(l=>/^(상|중|하)\s/.test(l)).map(l=>({rank:l.slice(0,1),text:l.replace(/^(상|중|하)\s*/,'').trim()}));return{itemLevel:itemLevel?Number(itemLevel.replace(/,/g,'')):null,tier:tier?Number(tier):null,quality:quality?Number(quality):null,base,options}}
+function parseStoneDetails(t){const txt=stripTags(flattenTooltip(t));const names=['원한','바리케이드','결투의 대가','예리한 둔기','저주받은 인형','아드레날린','급소 타격','안정된 상태','공격력 감소','공격 속도 감소','이동 속도 감소','기습의 대가','질량 증가'];const re=new RegExp('(' + names.join('|') + ')\\s*([+\\-]?\\d+)','g');const pick=[];let m;while((m=re.exec(txt))) pick.push({name:m[1],value:Number(m[2])});return{lines:pick}}
+function parseBraceletDetails(t){const L=flattenTooltip(t).split(/\n|<br>|<BR>/i).map(s=>stripTags(String(s).replace(/&nbsp;/g,' ').trim())).filter(Boolean);const o=[];L.forEach(l=>{let m=l.match(/(치명|특화|신속|제압|인내|숙련)\s*\+([0-9,]+)/);if(m){o.push({stat:m[1],value:Number(m[2].replace(/,/g,''))});return}m=l.match(/(.+?)\s*\+\s*([0-9.]+)%/);if(m)o.push({stat:m[1],value:m[2]+'%'})});return{options:o}}
 
-    /* ========================= 디버그 ========================= */
-    (function(){
-      var p=document.getElementById('__dbgPanel'),o=document.getElementById('__dbgOut');
-      function t(){return new Date().toLocaleTimeString();}
-      window.__dbg=(l,x)=>{ try{o.textContent="["+t()+"] "+l+"\n"+(typeof x==='string'?x:JSON.stringify(x,null,2)).slice(0,20000)+"\n\n"+o.textContent;}catch{} };
-      var B=document.getElementById('__dbgBtn'),C=document.getElementById('__dbgClose'),X=document.getElementById('__dbgClear');
-      if(B)B.onclick=()=>{p.style.display=p.style.display==='block'?'none':'block';};
-      if(C)C.onclick=()=>{p.style.display='none';};
-      if(X)X.onclick=()=>{o.textContent='';};
-    })();
+/* ===== 네트워크 ===== */
+async function fetchText(url,{retries=2,timeout=10000}={}){
+  for(let i=0;i<=retries;i++){
+    const ac=new AbortController(); const to=setTimeout(()=>ac.abort(),timeout);
+    try{ const r=await fetch(url,{mode:'cors',cache:'no-store',signal:ac.signal}); clearTimeout(to); if(!r.ok) throw new Error('HTTP '+r.status); return await r.text(); }
+    catch(e){ if(i===retries) throw e; await sleep(500*Math.pow(2,i)); }
+  }
+}
+async function fetchChar(name){
+  const url = API_BASE+'/character?name='+encodeURIComponent(name)+'&_t='+Date.now();
+  __dbg('REQ '+name,url);
+  const text = await fetchText(url); __dbg('RES '+name,text);
+  let raw={}; try{raw=JSON.parse(text)}catch{}
+  const d=(raw&&raw.ok&&raw.data)?raw.data:raw;
 
-    /* ========================= 배너/공지 ========================= */
-    function createSideFloat(side,cfg){
-      var wrap=document.getElementById('float-'+side);
-      if(!wrap){ wrap=document.createElement('div'); wrap.id='float-'+side; wrap.className='side-float '+side; document.body.appendChild(wrap); }
-      wrap.innerHTML='';
-      if(cfg && cfg.img){
-        var a=document.createElement('a'); a.href=cfg.link||'#'; a.target='_blank'; a.rel='noopener';
-        var img=new Image(); img.src=cfg.img; img.alt=side+' 배너';
-        a.appendChild(img); wrap.appendChild(a);
+  const out={
+    name:d.name||d.CharacterName||'-',
+    server:d.server||d.ServerName||'-',
+    cls:d.cls||d.CharacterClassName||'-',
+    avatar:d.avatar||d.CharacterImage||'',
+    itemLevelText:d.itemLevelText||d.ItemMaxLevel||d.ItemAvgLevel||d.ItemLevel||'-',
+    stats:d.stats||d.Stats||[],
+    combatPower:d.combatPower||'-',
+    engraves:Array.isArray(d.engraves)?d.engraves:[],
+    equipment:(d.equipment||d.ArmoryEquipment||[]).map(o=>{
+      const nm=o.name||o.Name||'', gr=o.grade||o.Grade||'', ic=o.icon||o.Icon||'', q=typeof o.quality==='number'?o.quality:null, tp=o.tooltip||o.Tooltip||'';
+      const lines=extractAffixOptions(tp), meta=parseEquipMeta(nm,gr,tp), slot=(o.Type||o.Slot||'')+' '+nm;
+      const isAcc=/(목걸이|귀걸이|반지)/.test(slot), isBracelet=/팔찌/.test(slot), isStone=/스톤|어빌리티\s*스톤/.test(slot);
+      return {name:nm,grade:gr,icon:ic,quality:q,tooltip:tp,gradeClass:gradeClass(gr),lines,meta,
+        acc:isAcc?parseAccessoryDetails(tp):null,
+        bracelet:isBracelet?parseBraceletDetails(tp):null,
+        stone:isStone?parseStoneDetails(tp):null};
+    }),
+    gems:d.gems||null,
+    cards:d.cards||null
+  };
+  __dbg('MAP '+name,out);
+  return out;
+}
+async function pool(list,limit,fn){
+  let i=0, active=0, out=new Array(list.length);
+  return await new Promise(res=>{
+    function next(){
+      if(i>=list.length && active===0) return res(out);
+      while(active<limit && i<list.length){
+        const idx=i++; active++;
+        fn(list[idx]).then(v=>out[idx]={status:'fulfilled',value:v})
+          .catch(e=>{__dbg('ERR '+list[idx],String(e&&e.message||e)); out[idx]={status:'rejected',reason:String(e)};})
+          .finally(()=>{active--; next();});
       }
-    }
-    function loadBanners(){
-      var map={ top:'bn-top', bottom:'bn-bottom' };
-      for(var pos in map){
-        var cfg=ADMIN_BANNERS[pos], el=document.getElementById(map[pos]); if(!el) continue;
-        el.innerHTML='';
-        if(cfg&&cfg.img){
-          var a=document.createElement('a'); a.href=cfg.link||'#'; a.target='_blank'; a.rel='noopener';
-          var img=new Image(); img.src=cfg.img; img.alt=pos+' 배너';
-          a.appendChild(img); el.appendChild(a);
-        } else el.innerHTML='<div class="small">'+pos+' 배너 미지정</div>';
-      }
-      createSideFloat('left',ADMIN_BANNERS.left);
-      createSideFloat('right',ADMIN_BANNERS.right);
-      var n=document.getElementById('noticeArea'); if(n) n.textContent=ADMIN_NOTICE_TEXT||'';
-    }
+    } next();
+  });
+}
 
-    /* ========================= 유틸/툴팁 파서 ========================= */
-    function setStatus(t){ var s=document.getElementById('status'); if(s) s.textContent=t; }
-    function parseItemLevel(raw){ if(!raw) return 0; var n=parseFloat(String(raw).replace(/[^0-9.]/g,'')); return isNaN(n)?0:n; }
-    function esc(s){ return String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
-    function stripTags(s){ return String(s||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(); }
+/* ===== 렌더링 ===== */
+function renderSkeleton(){
+  let h=''; for(let i=0;i<NAMES.length;i++){h+=`<div class="card-char"><div class="skeleton" style="width:100%;aspect-ratio:1/1;border-radius:12px"></div><div class="skeleton" style="height:16px;border-radius:8px;margin-top:8px"></div><div class="skeleton" style="height:12px;border-radius:6px;margin-top:6px;opacity:.6"></div></div>`}
+  $('#charGrid').innerHTML=h;
+}
+function renderGrid(arr){
+  arr.forEach(x=>x.itemLevelNum=parseFloat(String(x.itemLevelText||'').replace(/[^0-9.]/g,''))||0);
+  arr.sort((a,b)=>b.itemLevelNum-a.itemLevelNum);
+  const wrap=$('#charGrid'); let h='';
+  arr.forEach((it,i)=>{
+    const av=it.avatar||'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect width="300" height="300" fill="#061016"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9aa6b2" font-size="16">NO IMAGE</text></svg>');
+    h+=`<div class="card-char" data-idx="${i}"><img src="${av}"/><div class="name">${it.name||'-'}</div><div class="small">서버: ${it.server||'-'}</div><div class="small">직업: ${it.cls||'-'}</div><div class="row"><span class="small">아이템 레벨</span><strong>${it.itemLevelText||'-'}</strong></div><div class="row"><span class="small">전투력</span><strong>${it.combatPower||'-'}</strong></div></div>`;
+  });
+  wrap.innerHTML=h;
+  wrap.querySelectorAll('.card-char').forEach(el=>el.onclick=()=>openDetail(arr[Number(el.getAttribute('data-idx'))]));
+  setStatus('표시: '+arr.length+'개 · 정렬: 아이템 레벨');
+}
+function pill(t){return `<span class="gem-pill">${t}</span>`}
+function openDetail(d){
+  $('#dAvatar').src=d.avatar||''; $('#dName').textContent=d.name; $('#dServer').textContent='서버: '+d.server; $('#dCls').textContent=d.cls||'-'; $('#dIlv').textContent=d.itemLevelText||'-';
+  if(d.combatPower&&d.combatPower!=='-'){ $('#dCpWrap').style.display='inline-flex'; $('#dCp').textContent=d.combatPower; } else $('#dCpWrap').style.display='none';
+  const gs=$('#dGemSum'); const g=d.gems||{}; const parts=[]; if(g.avgLevel) parts.push('보석 평균 '+g.avgLevel); if(g.counts) parts.push((g.counts.damage||0)+'뎀 '+(g.counts.cooldown||0)+'쿨'); gs.innerHTML=parts.length?parts.map(pill).join(' '):'<span class="small">보석 정보 없음</span>';
+  const en=$('#dEngr'); en.innerHTML=''; (d.engraves||[]).forEach(x=>{const s=document.createElement('span'); s.className='chip'; s.textContent=x; en.appendChild(s);});
+  const eq=$('#dEquip'); eq.innerHTML='';
+  (d.equipment||[]).forEach(e=>{
+    const c=eqGradeColor(e.gradeClass), m=e.meta||parseEquipMeta(e.name,e.grade,e.tooltip); const enhance=m&&m.enhance?('+'+m.enhance):''; const upper=m&&m.upper?(' x'+m.upper):''; const right=[m&&m.step?(m.step+'단계'):'',m&&m.tier?m.tier:''].filter(Boolean).join('<br>');
+    const qhtml=typeof e.quality==='number'?`<div class="qpill">품질 <b>${e.quality}</b><div style="height:6px;border-radius:999px;background:rgba(255,255,255,.08);margin-left:8px;flex:1;overflow:hidden"><div style="height:6px;width:${Math.max(0,Math.min(100,e.quality))}% ;background:linear-gradient(90deg,#3fb950,#f2cc60,#ff6b6b)"></div></div></div>`:'';
+    const baseLines=(e.lines||[]).map(line=>{const g=line.startsWith('상')?'orange':(line.startsWith('중')?'purple':'blue');const tx=line.replace(/^(상|중|하)\s*/,'');return `<div class="opt-line"><span class="tag ${g}">${line[0]}</span><span class="small">${tx}</span></div>`}).join('');
+    let extra='';
+    if(e.acc){ const b=e.acc.base||{}; const base=Object.keys(b).length?`<div class="small" style="margin:6px 0 2px">기본: ${Object.entries(b).map(([k,v])=>k+' +'+v.toLocaleString()).join(' · ')}</div>`:''; const opts=(e.acc.options||[]).map(op=>`<div class="opt-line"><span class="tag ${op.rank==='상'?'orange':op.rank==='중'?'purple':'blue'}">${op.rank}</span><span class="small">${op.text}</span></div>`).join(''); const pills=[]; if(typeof e.acc.quality==='number') pills.push('품질 '+e.acc.quality); if(e.acc.itemLevel) pills.push('Lv.'+e.acc.itemLevel); if(e.acc.tier) pills.push('T'+e.acc.tier); extra = base + (pills.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">${pills.map(pill).join('')}</div>`:'') + (opts||'<span class="small">부여 옵션 없음</span>'); }
+    if(e.stone){ const s=e.stone.lines||[]; extra = s.length ? s.map(it=>`<div class="opt-line"><span class="tag purple">석</span><span class="small">${it.name} ${(it.value>=0?'+':'')+it.value}</span></div>`).join('') : '<span class="small">스톤 정보 없음</span>'; }
+    if(e.bracelet){ const bx=e.bracelet.options||[]; extra = bx.length ? bx.map(it=>`<div class="opt-line"><span class="tag blue">팔</span><span class="small">${it.stat} +${it.value}</span></div>`).join('') : '<span class="small">팔찌 옵션 없음</span>'; }
+    const row=document.createElement('div'); row.className='equip-row'; row.style.borderLeft='4px solid '+c;
+    row.innerHTML=`<img src="${e.icon||'https://via.placeholder.com/42'}" style="width:42px;height:42px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.12)"><div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:2px"><span class="badge" style="color:${c}">${e.grade||''}</span>${enhance?`<span class="badge">${enhance}${upper?(' '+upper):''}</span>`:''}<span style="font-weight:800;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name||''}</span></div>${qhtml?`<div style="display:flex;align-items:center;gap:6px;margin-top:4px">${qhtml}</div>`:''}<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">${m&&m.transcend?pill('초월 '+(m.transcend.avg?('Lv.'+m.transcend.avg):'')+(m.transcend.total?(' ×'+m.transcend.total):'')) : ''}${m&&m.elixir?pill('엘릭서 '+(m.elixir.level?('Lv.'+m.elixir.level):(m.elixir.percent?m.elixir.percent+'%':''))):''}</div><div class="opt-lines">${extra || baseLines || '<span class="small">부여 옵션 없음</span>'}</div></div><div class="small" style="text-align:right;min-width:64px">${right}</div>`;
+    eq.appendChild(row);
+  });
+  const cw=$('#dCards'); cw.innerHTML=''; const c=d.cards||{}; if((c.list||[]).length){ c.list.forEach(it=>{const s=document.createElement('div'); s.className='card-slot'; s.innerHTML=`<img src="${it.icon||'https://via.placeholder.com/68x94'}"><span class="awake">x${it.awakening||0}</span>`; cw.appendChild(s);}); const meta=[]; if(c.setName) meta.push(c.setName+(c.setCount?' '+c.setCount+'세트':'')); if(c.awakeningTotal!=null) meta.push('총 '+c.awakeningTotal+'각'); if(meta.length){const d2=document.createElement('div'); d2.className='small'; d2.style.marginTop='6px'; d2.textContent=meta.join(' · '); cw.appendChild(d2);} } else cw.innerHTML='<span class="small">카드 정보 없음</span>';
+  $('#detailModal').classList.add('on');
+}
 
-    function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-    async function fetchTextWithRetry(url,{retries=2, timeout=10000}={}){
-      for(let i=0;i<=retries;i++){
-        const ac=new AbortController(); const to=setTimeout(()=>ac.abort(),timeout);
-        try{
-          const res=await fetch(url,{mode:'cors',cache:'no-store',signal:ac.signal});
-          clearTimeout(to);
-          if(!res.ok) throw new Error('HTTP '+res.status);
-          return await res.text();
-        }catch(e){
-          if(i===retries) throw e;
-          await sleep(500*Math.pow(2,i));
-        }
-      }
-    }
-    async function pool(items, limit, worker){
-      let i=0, active=0; const results=new Array(items.length);
-      return await new Promise(resolve=>{
-        function next(){
-          if(i>=items.length && active===0) return resolve(results);
-          while(active<limit && i<items.length){
-            const idx=i++; active++;
-            Promise.resolve(worker(items[idx]))
-              .then(v=>results[idx]={status:'fulfilled', value:v})
-              .catch(err=>{ __dbg('ERR '+items[idx], String(err&&err.message||err)); results[idx]={status:'rejected', reason:String(err&&err.message||err)}; })
-              .finally(()=>{ active--; next(); });
-          }
-        } next();
-      });
-    }
+/* ===== 플로우 ===== */
+function skeleton(){ let h=''; for(let i=0;i<NAMES.length;i++){h+=`<div class="card-char"><div class="skeleton" style="width:100%;aspect-ratio:1/1;border-radius:12px"></div><div class="skeleton" style="height:16px;border-radius:8px;margin-top:8px"></div><div class="skeleton" style="height:12px;border-radius:6px;margin-top:6px;opacity:.6"></div></div>`} $('#charGrid').innerHTML=h; }
+async function refreshAll(){
+  try{
+    setStatus('전체 불러오는 중...'); skeleton();
+    const res = await pool(NAMES, CONCURRENCY, fetchChar);
+    const list = res.map((r,i)=> r&&r.status==='fulfilled' ? r.value : {name:NAMES[i],server:'-',cls:'-',avatar:'',itemLevelText:'-',combatPower:'-',equipment:[],engraves:[],gems:null,cards:null});
+    renderGrid(list);
+    try{ localStorage.setItem('gridCache_v10', JSON.stringify(list)); }catch{}
+    setStatus('완료');
+  }catch(e){
+    __dbg('refreshAll ERR',String(e&&e.message||e));
+    try{ const c=localStorage.getItem('gridCache_v10'); if(c){ renderGrid(JSON.parse(c)); setStatus('오프라인 캐시 표시'); return; } }catch{}
+    setStatus('실패: 네트워크/백엔드 점검');
+  }
+}
 
-    function flattenTooltip(raw){
-      if(!raw) return '';
-      var j=raw;
-      if(typeof raw==='string'){ try{ j=JSON.parse(raw.replace(/\\"/g,'"')); }catch(_){ return ''; } }
-      if(typeof j!=='object'||j===null) return '';
-      var pick=[],k,v;
-      for(k in j){
-        v=j[k]&&j[k].value;
-        pick.push((v&&v.Element_000&&v.Element_000.contentStr)||
-                  (v&&v.Element_001&&v.Element_001.contentStr)||
-                  (v&&v.Element_002&&v.Element_002.contentStr)||
-                  (v&&v.Element_000)||(v&&v.leftStr)||(v&&v.rightStr)||
-                  (typeof v==='string'? v : '')||'');
-      }
-      return pick.filter(Boolean).join('\n');
-    }
-    function extractAffixOptions(tooltipRaw){
-      return flattenTooltip(tooltipRaw).split(/\n|<br>|<BR>/i)
-        .map(s=>stripTags(String(s).replace(/&nbsp;/g,' ').trim()))
-        .filter(Boolean).filter(s=>/^(상|중|하)\b/.test(s));
-    }
-    function parseEquipMeta(name,grade,tooltipRaw){
-      var t=(flattenTooltip(tooltipRaw)+' '+(name||'')+' '+(grade||'')).replace(/\s+/g,' ');
-      function num(re){ var m=re.exec(t); return m? Number(m[1]) : null; }
-      var enhance=num(/\+ *(\d{1,2})/), upper=num(/x *(\d{1,2})/i), step=num(/(\d{1,2})\s*단계/), tierN=num(/티어\s*([0-9])/i);
-      var tier=tierN?('T'+tierN):null;
-      var trans=null, a=t.match(/초월[^L]*Lv\.?\s*([0-9]{1,2})\D*×\D*([0-9]{1,3})/i); if(a) trans={avg:Number(a[1]), total:Number(a[2])};
-      var elixir=null, b=t.match(/엘릭서[^0-9]*([0-9]{1,3}(?:\.[0-9]+)?)%/); if(b) elixir={percent:Number(b[1])};
-      if(!elixir){ var c=t.match(/엘릭서[^L]*Lv\.?\s*([0-9]{1,2})/i); if(c) elixir={level:Number(c[1])}; }
-      return { enhance, upper, step, tier, transcend:trans, elixir };
-    }
-    function gradeClass(g){ g=String(g||''); if(/고대/.test(g))return'ancient'; if(/유물/.test(g))return'relic'; if(/전설/.test(g))return'legendary'; if(/영웅/.test(g))return'epic'; if(/희귀/.test(g))return'rare'; if(/고급/.test(g))return'uncommon'; return'common'; }
-    function eqGradeColor(cls){ return {ancient:'#d4af37', relic:'#f44336', legendary:'#ffa726', epic:'#b388ff', rare:'#64b5f6', uncommon:'#66bb6a', common:'#9aa6b2'}[cls||'common']||'#9aa6b2'; }
-
-    function parseAccessoryDetails(tooltipRaw){
-      const lines = flattenTooltip(tooltipRaw).split(/\n|<br>|<BR>/i)
-        .map(s=>stripTags(String(s).replace(/&nbsp;/g,' ').trim())).filter(Boolean);
-      const joined = lines.join(' ');
-      const itemLevel = (joined.match(/아이템\s*레벨\s*([0-9,]+)/i)||[])[1];
-      const tier = (joined.match(/티어\s*([0-9])/i)||[])[1];
-      const quality = (joined.match(/품질\s*([0-9]{1,3})/i)||[])[1];
-      const base = {};
-      lines.forEach(l=>{ const m=l.match(/(힘|지능|민첩|체력)\s*\+([0-9,]+)/); if(m) base[m[1]]=Number(m[2].replace(/,/g,'')); });
-      const options = lines.filter(l=>/^(상|중|하)\s/.test(l)).map(l=>({rank:l.slice(0,1), text:l.replace(/^(상|중|하)\s*/,'').trim()}));
-      return {
-        itemLevel:itemLevel?Number(itemLevel.replace(/,/g,'')):null,
-        tier:tier?Number(tier):null,
-        quality:quality?Number(quality):null,
-        base, options
-      };
-    }
-    function parseStoneDetails(tooltipRaw){
-      const txt=stripTags(flattenTooltip(tooltipRaw));
-      const names=['원한','바리케이드','결투의 대가','예리한 둔기','저주받은 인형','아드레날린','급소 타격','안정된 상태','공격력 감소','공격 속도 감소','이동 속도 감소','기습의 대가','질량 증가'];
-      const re=new RegExp('(' + names.join('|') + ')\\s*([+\\-]?\\d+)', 'g');
-      const pick=[]; let m; while((m=re.exec(txt))){ pick.push({name:m[1], value:Number(m[2])}); }
-      return { lines: pick };
-    }
-    function parseBraceletDetails(tooltipRaw){
-      const lines = flattenTooltip(tooltipRaw).split(/\n|<br>|<BR>/i)
-        .map(s=>stripTags(String(s).replace(/&nbsp;/g,' ').trim())).filter(Boolean);
-      const opts=[];
-      lines.forEach(l=>{
-        let m=l.match(/(치명|특화|신속|제압|인내|숙련)\s*\+([0-9,]+)/); if(m){ opts.push({stat:m[1], value:Number(m[2].replace(/,/g,''))}); return; }
-        m=l.match(/(.+?)\s*\+\s*([0-9.]+)%/); if(m){ opts.push({stat:m[1], value:m[2]+'%'}); }
-      });
-      return { options:opts };
-    }
-
-    /* ========================= 캐릭터 API ========================= */
-    async function fetchChar(name){
-      var url = API_BASE + '/character?name=' + encodeURIComponent(name) + '&_t=' + Date.now();
-      __dbg('REQ '+name, url);
-      const text = await fetchTextWithRetry(url, {retries:2, timeout:10000});
-      __dbg('RES '+name, text);
-
-      let raw; try{ raw=JSON.parse(text); }catch(_){ raw={}; }
-      const d=(raw&&raw.ok&&raw.data)?raw.data:raw;
-
-      const out={
-        name:d.name||d.CharacterName||'-',
-        server:d.server||d.ServerName||'-',
-        cls:d.cls||d.CharacterClassName||'-',
-        avatar:d.avatar||d.CharacterImage||'',
-        itemLevelText:d.itemLevelText||d.ItemMaxLevel||d.ItemAvgLevel||d.ItemLevel||'-',
-        stats:d.stats||d.Stats||[],
-        combatPower:d.combatPower||(Array.isArray(d.stats)?(d.stats.find(s=>String(s.Type||s.Name||'').includes('전투력'))||{}).Value:null)||'-',
-        engraves:Array.isArray(d.engraves)?d.engraves:
-                 (d.ArmoryEngraving&&Array.isArray(d.ArmoryEngraving.Engravings))?d.ArmoryEngraving.Engravings.map(e=>e.Name+(e.Level?' Lv.'+e.Level:'')) : [],
-        equipment:(d.equipment||d.ArmoryEquipment||[]).map(function(x){
-          const o=x||{};
-          const nm=o.name||o.Name||''; const gr=o.grade||o.Grade||''; const ic=o.icon||o.Icon||'';
-          const qv=(typeof o.quality==='number')?o.quality:(typeof o.Quality==='number')?o.Quality:null;
-          const tp=o.tooltip||o.Tooltip||'';
-          const lines=(o.lines&&o.lines.length)?o.lines:extractAffixOptions(tp);
-          const meta=o.meta||parseEquipMeta(nm,gr,tp);
-          const slotText=(o.Type||o.Slot||'')+' '+nm;
-          const isAcc=/(목걸이|귀걸이|반지)/.test(slotText);
-          const isBracelet=/팔찌/.test(slotText);
-          const isStone=/스톤|어빌리티\s*스톤/.test(slotText);
-          return {
-            name:nm, grade:gr, icon:ic, quality:qv, tooltip:tp,
-            gradeClass:o.gradeClass||gradeClass(gr), lines, meta,
-            acc: isAcc ? parseAccessoryDetails(tp) : null,
-            bracelet: isBracelet ? parseBraceletDetails(tp) : null,
-            stone: isStone ? parseStoneDetails(tp) : null
-          };
-        }),
-        gems:d.gems||null,
-        cards:d.cards||null
-      };
-      __dbg('MAP '+name, out);
-      return out;
-    }
-
-    /* ========================= 그리드/상세 ========================= */
-    function renderSkeleton(){
-      var html=''; for(var i=0;i<ADMIN_CHARACTERS.length;i++){
-        html+='<div class="card-char"><div class="skeleton" style="width:100%;aspect-ratio:1/1;border-radius:12px"></div><div class="skeleton" style="height:16px;border-radius:8px;margin-top:8px"></div><div class="skeleton" style="height:12px;border-radius:6px;margin-top:6px;opacity:.6"></div></div>';
-      } document.getElementById('charGrid').innerHTML=html;
-    }
-    function renderGrid(list){
-      var wrap=document.getElementById('charGrid'), html='';
-      list.forEach(function(it,i){
-        var av=it.avatar||'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect width="300" height="300" fill="#061016"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9aa6b2" font-size="16">NO IMAGE</text></svg>');
-        html+='<div class="card-char" data-idx="'+i+'">'
-          + '<img src="'+av+'" alt="'+esc(it.name)+' 아바타">'
-          + '<div class="name">'+esc(it.name)+'</div>'
-          + '<div class="meta">서버: '+esc(it.server)+'</div>'
-          + '<div class="meta">직업: '+esc(it.cls||'-')+'</div>'
-          + '<div class="row"><span class="small">아이템 레벨</span><strong>'+esc(it.itemLevelText||'-')+'</strong></div>'
-          + '<div class="row"><span class="small">전투력</span><strong>'+(it.combatPower||'-')+'</strong></div>'
-          + '</div>';
-      });
-      wrap.innerHTML=html;
-      wrap.querySelectorAll('.card-char').forEach(function(card){
-        card.addEventListener('click', function(){ var idx=Number(card.getAttribute('data-idx')); openDetail(list[idx]); });
-      });
-      setStatus('표시: '+list.length+'개 · 정렬: 아이템 레벨');
-    }
-
-    function pill(t){ return '<span class="gem-pill">'+esc(t)+'</span>'; }
-    function openDetail(d){
-      document.getElementById('dAvatar').src=d.avatar||'';
-      document.getElementById('dName').textContent=d.name;
-      document.getElementById('dServer').textContent='서버: '+d.server;
-      document.getElementById('dCls').textContent=d.cls||'-';
-      document.getElementById('dIlv').textContent=d.itemLevelText||'-';
-      if(d.combatPower&&d.combatPower!=='-'){ document.getElementById('dCpWrap').style.display='inline-flex'; document.getElementById('dCp').textContent=d.combatPower; } else document.getElementById('dCpWrap').style.display='none';
-
-      var g=d.gems||{}, gs=document.getElementById('dGemSum'); gs.innerHTML='';
-      var parts=[]; if(g.avgLevel) parts.push('평균 '+g.avgLevel); if(g.counts&&(g.counts.damage||g.counts.cooldown)) parts.push((g.counts.damage||0)+'뎀',(g.counts.cooldown||0)+'쿨');
-      gs.innerHTML=parts.length? parts.map(pill).join(' ') : '<span class="small">보석 정보 없음</span>';
-
-      var en=document.getElementById('dEngr'); en.innerHTML=(d.engraves||[]).length?'':'<span class="small">각인 정보 없음</span>';
-      (d.engraves||[]).forEach(function(x){ var sp=document.createElement('span'); sp.className='chip'; sp.textContent=x; en.appendChild(sp); });
-
-      var eqWrap=document.getElementById('dEquip'); eqWrap.innerHTML='';
-      (d.equipment||[]).forEach(function(e){
-        var color=eqGradeColor(e.gradeClass);
-        var m=e.meta||parseEquipMeta(e.name,e.grade,e.tooltip);
-        var enhance=m&&m.enhance?('+'+m.enhance):''; var upper=m&&m.upper?(' x'+m.upper):'';
-        var right=[m&&m.step?(m.step+'단계'):'', m&&m.tier?m.tier:''].filter(Boolean).join('<br>');
-        var qHtml=(typeof e.quality==='number')
-          ? '<div class="qpill">품질 <b>'+e.quality+'</b><div style="height:6px;border-radius:999px;background:rgba(255,255,255,.08);margin-left:8px;flex:1;overflow:hidden"><div style="height:6px;width:'+Math.max(0,Math.min(100,e.quality))+'%;background:linear-gradient(90deg,#3fb950,#f2cc60,#ff6b6b)"></div></div></div>'
-          : '';
-
-        var baseLines=(e.lines||[]).map(function(line){
-          var g=line.startsWith('상')?'orange':(line.startsWith('중')?'purple':'blue');
-          var text=line.replace(/^(상|중|하)\s*/,'');
-          return '<div class="opt-line"><span class="tag '+g+'">'+line.charAt(0)+'</span><span class="small">'+esc(text)+'</span></div>';
-        }).join('');
-
-        let extraHtml='';
-        if(e.acc){
-          const b=e.acc.base||{};
-          const baseStats=Object.keys(b).length ? '<div class="small" style="margin:6px 0 2px">기본: '+Object.entries(b).map(([k,v])=>k+' +'+v.toLocaleString()).join(' · ')+'</div>' : '';
-          const opts=(e.acc.options||[]).map(op=>{
-            const g=op.rank==='상'?'orange':(op.rank==='중'?'purple':'blue');
-            return '<div class="opt-line"><span class="tag '+g+'">'+op.rank+'</span><span class="small">'+esc(op.text)+'</span></div>';
-          }).join('');
-          const pills=[]; if(typeof e.acc.quality==='number') pills.push('품질 '+e.acc.quality); if(e.acc.itemLevel) pills.push('Lv.'+e.acc.itemLevel); if(e.acc.tier) pills.push('T'+e.acc.tier);
-          extraHtml = baseStats + (pills.length? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">'+pills.map(pill).join('')+'</div>':'' ) + (opts || '<span class="small">부여 옵션 없음</span>');
-        }
-        if(e.stone){
-          const s=e.stone.lines||[];
-          extraHtml = s.length ? s.map(it=>'<div class="opt-line"><span class="tag purple">석</span><span class="small">'+esc(it.name)+' '+(it.value>=0?'+':'')+it.value+'</span></div>').join('') : '<span class="small">스톤 정보 없음</span>';
-        }
-        if(e.bracelet){
-          const bx=e.bracelet.options||[];
-          extraHtml = bx.length ? bx.map(it=>'<div class="opt-line"><span class="tag blue">팔</span><span class="small">'+esc(it.stat)+' +'+esc(it.value)+'</span></div>').join('') : '<span class="small">팔찌 옵션 없음</span>';
-        }
-
-        var row=document.createElement('div'); row.className='equip-row'; row.style.borderLeft='4px solid '+color;
-        row.innerHTML =
-          '<img src="'+(e.icon||'https://via.placeholder.com/42')+'" alt="" style="width:42px;height:42px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.12)">'+
-          '<div>'+
-            '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:2px">'+
-              '<span class="badge" style="color:'+color+'">'+esc(e.grade||'')+'</span>'+
-              (enhance? '<span class="badge">'+enhance+(upper?(' '+upper):'')+'</span>':'')+
-              '<span style="font-weight:800;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(e.name||'')+'</span>'+
-            '</div>'+
-            (qHtml? '<div style="display:flex;align-items:center;gap:6px;margin-top:4px">'+qHtml+'</div>':'')+
-            '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">'+
-              (m&&m.transcend? pill('초월 '+(m.transcend.avg?('Lv.'+m.transcend.avg):'')+(m.transcend.total?(' ×'+m.transcend.total):'')) :'')+
-              (m&&m.elixir? pill('엘릭서 '+(m.elixir.level?('Lv.'+m.elixir.level):(m.elixir.percent? m.elixir.percent+'%':''))):'')+
-            '</div>'+
-            '<div class="opt-lines">'+ (extraHtml || (baseLines || '<span class="small">부여 옵션 없음</span>')) + '</div>'+
-          '</div>'+
-          '<div class="small" style="text-align:right;min-width:64px">'+right+'</div>';
-        eqWrap.appendChild(row);
-      });
-
-      var c=d.cards||{}; var cw=document.getElementById('dCards'); cw.innerHTML='';
-      if((c.list||[]).length){
-        (c.list||[]).forEach(function(it){
-          var slot=document.createElement('div'); slot.className='card-slot';
-          slot.innerHTML='<img src="'+(it.icon||'https://via.placeholder.com/68x94')+'" alt="'+esc(it.name||'')+'"><span class="awake">x'+(it.awakening||0)+'</span>';
-          cw.appendChild(slot);
-        });
-        var meta=[]; if(c.setName) meta.push(c.setName+(c.setCount?' '+c.setCount+'세트':'')); if(c.awakeningTotal!=null) meta.push('총 '+c.awakeningTotal+'각');
-        if(meta.length){ var div=document.createElement('div'); div.className='small'; div.style.marginTop='6px'; div.textContent=meta.join(' · '); cw.appendChild(div); }
-      }else cw.innerHTML='<span class="small">카드 정보 없음</span>';
-
-      document.getElementById('detailModal').classList.add('on');
-    }
-
-    /* ========================= 게시판 ========================= */
-    async function hashPwd(p){ if(!window.crypto||!crypto.subtle) return p; var enc=new TextEncoder().encode(p); var buf=await crypto.subtle.digest('SHA-256',enc); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
-    async function loadPosts(){ try{ var r=await fetch(API_BASE+'/posts',{cache:'no-store'}); if(!r.ok) throw new Error('POSTS '+r.status); renderPosts(await r.json()); } catch(e){ document.getElementById('posts').innerHTML = '<div class="small">게시글 불러오기 실패: '+(e.message||e)+'</div>'; } }
-    function renderPosts(arr){
-      var wrap=document.getElementById('posts'); wrap.innerHTML='';
-      (arr||[]).slice().reverse().forEach(function(p){
-        var el=document.createElement('div'); el.className='post';
-        el.innerHTML = '<header><strong>'+esc(p.author||'익명')+'</strong><span class="meta">'+new Date(p.ts).toLocaleString()+'</span></header>'
-                     + '<div style="margin-top:8px">'+esc(p.content||'')+'</div>'
-                     + '<div style="margin-top:10px;text-align:right"><button class="danger small" data-id="'+p.id+'">삭제</button></div>';
-        wrap.appendChild(el);
-      });
-      wrap.querySelectorAll('button[data-id]').forEach(function(btn){
-        btn.addEventListener('click', async function(e){
-          var id=e.currentTarget.getAttribute('data-id');
-          var input=prompt('이 글의 비밀번호를 입력하세요'); if(input==null) return;
-          var pwdHash=await hashPwd(input);
-          var r=await fetch(API_BASE+'/posts',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,pwdHash})});
-          if(!r.ok){ alert('삭제 실패: '+(await r.text())); return; }
-          loadPosts();
-        });
-      });
-    }
-    async function addPost(){
-      var author=document.getElementById('author').value.trim();
-      var content=document.getElementById('content').value.trim();
-      var pwd=document.getElementById('pwd').value;
-      if(!content){ alert('내용을 입력하세요'); return; }
-      if(!pwd){ alert('비밀번호를 입력하세요'); return; }
-      var pwdHash=await hashPwd(pwd);
-      var r=await fetch(API_BASE+'/posts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({author,content,pwdHash})});
-      if(!r.ok){ alert('등록 실패: '+(await r.text())); return; }
-      document.getElementById('author').value=''; document.getElementById('content').value=''; document.getElementById('pwd').value='';
-      loadPosts();
-    }
-
-    /* ========================= 데이터 흐름 ========================= */
-    function renderGridSafe(list){ list.forEach(x=>x.itemLevelNum=parseItemLevel(x.itemLevelText)); list.sort((a,b)=>b.itemLevelNum-a.itemLevelNum); renderGrid(list); }
-    async function refreshAll(){
-      try{
-        setStatus('전체 불러오는 중...'); renderSkeleton();
-        const results = await pool(ADMIN_CHARACTERS, CONCURRENCY, fetchChar);
-        const list = results.map((r,i)=> r && r.status==='fulfilled'
-          ? r.value
-          : {name:ADMIN_CHARACTERS[i], server:'-', cls:'-', avatar:'', itemLevelText:'-', combatPower:'-', equipment:[], engraves:[], gems:null, cards:null});
-        renderGridSafe(list);
-        try{ localStorage.setItem('gridCache_v9', JSON.stringify(list)); }catch(_){}
-        setStatus('완료');
-      }catch(e){
-        __dbg('refreshAll ERR', String(e&&e.message||e));
-        try{
-          const cache=localStorage.getItem('gridCache_v9');
-          if(cache){ renderGridSafe(JSON.parse(cache)); setStatus('오프라인 캐시 표시'); return; }
-        }catch(_){}
-        setStatus('실패: 네트워크/백엔드 점검');
-      }
-    }
-
-    /* ========================= 초기화 ========================= */
-    document.addEventListener('DOMContentLoaded', function(){
-      loadBanners();
-      refreshAll();
-      loadPosts();
-
-      document.getElementById('refreshAll').addEventListener('click', refreshAll);
-      document.getElementById('btnPost').addEventListener('click', addPost);
-      document.getElementById('content').addEventListener('keydown', function(e){ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)){ e.preventDefault(); addPost(); } });
-      var t=document.getElementById('pwdToggle'), p=document.getElementById('pwd'); if(t&&p) t.addEventListener('change', function(){ p.type = t.checked? 'text':'password'; });
-
-      document.getElementById('closeDetail').addEventListener('click', function(){ document.getElementById('detailModal').classList.remove('on'); });
-      document.getElementById('detailModal').addEventListener('click', function(e){ if(e.target.id==='detailModal') document.getElementById('detailModal').classList.remove('on'); });
-
-      setInterval(refreshAll, AUTO_MS);
-      window.addEventListener('online',  function(){ setStatus('온라인 복구: 재동기화 중...'); refreshAll(); });
-      window.addEventListener('offline', function(){ setStatus('오프라인: 캐시/모의 데이터 표시'); });
-    });
-  </script>
-</body>
-</html>
+document.addEventListener('DOMContentLoaded', ()=>{
+  refreshAll();
+  $('#refreshAll').onclick=refreshAll;
+  $('#closeDetail').onclick=()=>$('#detailModal').classList.remove('on');
+  $('#detailModal').addEventListener('click',e=>{ if(e.target.id==='detailModal') $('#detailModal').classList.remove('on'); });
+  setInterval(refreshAll, AUTO_MS);
+});
+</script>
+</body></html>
