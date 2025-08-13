@@ -6,18 +6,10 @@
   <title>lostamen — 캐릭터 보드</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#0b0f14; --panel:#0f1720; --muted:#9aa6b2; --gold:#d4af37; --glass:rgba(255,255,255,0.04);
-      --radius:16px; --radius-sm:12px; --shadow:0 6px 18px rgba(0,0,0,.5);
-    }
+    :root{ --bg:#0b0f14; --panel:#0f1720; --muted:#9aa6b2; --gold:#d4af37; --glass:rgba(255,255,255,0.04); --radius:16px; --radius-sm:12px; --shadow:0 6px 18px rgba(0,0,0,.5);}
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{
-      margin:0; padding:clamp(10px, 2.8vw, 22px);
-      font-family:'Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-      background:linear-gradient(180deg,#071016 0%, #07131a 60%);
-      color:#e6eef6; line-height:1.55;
-    }
+    body{margin:0; padding:clamp(10px, 2.8vw, 22px); font-family:'Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071016 0%, #07131a 60%); color:#e6eef6; line-height:1.55;}
     .container{max-width:1000px;margin:0 auto;display:grid;gap:16px}
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:var(--radius);padding:16px;border:1px solid rgba(255,255,255,0.06);box-shadow:var(--shadow)}
     .small{font-size:12px;color:var(--muted)}
@@ -48,21 +40,15 @@
 
     .chip{background:linear-gradient(90deg, rgba(212,175,55,.16), transparent);padding:3px 8px;border-radius:999px;color:#d4af37;font-weight:800;font-size:12px}
 
-    /* ===== 상세 레이아웃(스케치 반영) ===== */
+    /* 상세 레이아웃 */
     .detail-left h4{margin:10px 0 6px;color:var(--gold)}
-    .engr-box{
-      min-height:220px;background:#0b121a;border:1px solid rgba(255,255,255,.08);
-      border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start
-    }
+    .engr-box{min-height:220px;background:#0b121a;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
     .engr-box .chip{font-size:13px}
     .equip-list{display:grid;gap:8px}
-    .equip-item{
-      display:grid;grid-template-columns:18px 42px 1fr 70px;gap:10px;align-items:center;
-      background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px
-    }
+    .equip-item{display:grid;grid-template-columns:18px 42px 1fr 70px;gap:10px;align-items:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px}
     .slot-chip{width:18px;height:18px;border-radius:4px}
-    .slot-gear{background:#e53935}   /* 빨간 사각형: 장비 */
-    .slot-acc{background:#1e88e5}    /* 파란 사각형: 악세 */
+    .slot-gear{background:#e53935}
+    .slot-acc{background:#1e88e5}
     .qbar{height:10px;border-radius:8px;background:rgba(255,255,255,.08);overflow:hidden}
     .qbar>i{display:block;height:10px;width:0}
     .opt-line{display:flex;gap:8px;align-items:flex-start}
@@ -111,7 +97,7 @@
     <section class="card bottom-banner" id="bn-bottom"></section>
   </div>
 
-  <!-- 상세 모달: 스케치 반영 -->
+  <!-- 상세 모달 -->
   <div id="detailModal" class="modal" aria-modal="true" role="dialog">
     <div class="panel">
       <div class="left detail-left" style="padding:14px;border-right:1px solid rgba(255,255,255,.06)">
@@ -211,6 +197,7 @@
     function pill(t){return '<span class="gem-pill" style="padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.06);font-size:12px">'+esc(t)+'</span>'}
     function gradeClass(g){ g=String(g||''); if(/고대/.test(g))return'ancient'; if(/유물/.test(g))return'relic'; if(/전설/.test(g))return'legendary'; if(/영웅/.test(g))return'epic'; if(/희귀/.test(g))return'rare'; if(/고급/.test(g))return'uncommon'; return'common'; }
     function gradeColor(c){return{ancient:'#d4af37',relic:'#f44336',legendary:'#ffa726',epic:'#b388ff',rare:'#64b5f6',uncommon:'#66bb6a',common:'#9aa6b2'}[c||'common']||'#9aa6b2'}
+    function fmtNum(n){ if(n==null || n==='-') return '-'; var x=Number(n); return Number.isFinite(x)? x.toLocaleString() : String(n); }
 
     function flattenTooltip(tooltipRaw){
       if(!tooltipRaw) return '';
@@ -245,12 +232,7 @@
       var quality=(J.match(/품질\s*([0-9]{1,3})/i)||[])[1];
       var base={}; L.forEach(function(l){ var m=l.match(/(힘|지능|민첩|체력)\s*\+([0-9,]+)/); if(m) base[m[1]]=Number(m[2].replace(/,/g,'')); });
       var options=L.filter(function(l){return /^(상|중|하)\s/.test(l)}).map(function(l){return{rank:l.slice(0,1),text:l.replace(/^(상|중|하)\s*/,'').trim()};});
-      return {
-        itemLevel:itemLevel?Number(itemLevel.replace(/,/g,'')):null,
-        tier:tier?Number(tier):null,
-        quality:quality?Number(quality):null,
-        base:base, options:options
-      };
+      return { itemLevel:itemLevel?Number(itemLevel.replace(/,/g,'')):null, tier:tier?Number(tier):null, quality:quality?Number(quality):null, base:base, options:options };
     }
     function parseStoneDetails(tooltip){
       var txt=stripTags(flattenTooltip(tooltip));
@@ -292,13 +274,15 @@
             var m = String(s).match(/^(.+?)\s*Lv\.\s*([0-9]+)/);
             return { Name: m? m[1] : s, Level: m? Number(m[2]) : null };
           }) },
-          _cards: d.cards, _gems: d.gems
+          _cards: d.cards, _gems: d.gems,
+          _combatPower: d.combatPower   // ★ 백엔드 값 직통 전달
         });
       }catch(e){
         __dbg('ERR ' + name, String(e&&e.message||e));
         return mockChar(name);
       }
     }
+
     function mapArmory(raw){
       raw = raw || {};
       var p = raw.ArmoryProfile || {};
@@ -309,6 +293,7 @@
         var lv = e && e.Level ? (' Lv.'+e.Level) : '';
         return (nm + lv).trim();
       });
+
       function metaFromTooltip(tooltip,name,grade){
         var flat=(flattenTooltip(tooltip)+' '+(name||'')+' '+(grade||'')).replace(/\s+/g,' ');
         function one(re){ var m=re.exec(flat); return m? Number(m[1]) : null; }
@@ -333,11 +318,18 @@
         avatar: p.CharacterImage || '',
         itemLevelText: p.ItemMaxLevel || p.ItemAvgLevel || p.ItemLevel || '-',
         itemLevelNum: parseItemLevelNum(p.ItemMaxLevel || p.ItemAvgLevel || p.ItemLevel),
+
+        // ★ 전투력: 1) 백엔드 직통(_combatPower) 2) Stats 스캔 3) '-'
         combatPower: (function(){
+          if (raw._combatPower != null) return raw._combatPower;
           var stats = Array.isArray(p.Stats)? p.Stats : [];
           var s = stats.find(function(x){ return /전투력|combat/i.test(String(x.Type||x.Name||'')); });
-          return s? (s.Value || s.value) : '-';
+          var v = s? (s.Value || s.value) : null;
+          if (v == null) return '-';
+          var n = Number(String(v).replace(/,/g,''));
+          return Number.isFinite(n) ? n : '-';
         })(),
+
         equipment: (equips || []).map(function(x){
           x = x || {};
           var nm = x.Name || '', gr = x.Grade || '', tp = x.Tooltip || '', ic = x.Icon || '';
@@ -365,16 +357,13 @@
       };
       return mapped;
     }
+
     function mockChar(name){
       var ilv = 1500 + Math.floor(Math.random()*300);
-      return {
-        name:name, server:'-', cls:'-', avatar:'',
-        itemLevelText: ilv.toFixed(2), itemLevelNum: ilv,
-        combatPower: '-', equipment:[], engraves:[], cards:null, gems:null
-      };
+      return { name:name, server:'-', cls:'-', avatar:'', itemLevelText: ilv.toFixed(2), itemLevelNum: ilv, combatPower: '-', equipment:[], engraves:[], cards:null, gems:null };
     }
 
-    /* ========================= 그리드 렌더 ========================= */
+    /* ========================= 그리드 ========================= */
     function renderSkeleton(){
       var html = '';
       for(var i=0;i<ADMIN_CHARACTERS.length;i++){
@@ -398,7 +387,7 @@
           + '<div class="meta">서버: '+esc(it.server)+'</div>'
           + '<div class="meta">직업: '+esc(it.cls||'-')+'</div>'
           + '<div class="row"><span class="small">아이템 레벨</span><strong>'+esc(it.itemLevelText||'-')+'</strong></div>'
-          + '<div class="row"><span class="small">전투력</span><strong>'+esc(it.combatPower||'-')+'</strong></div>'
+          + '<div class="row"><span class="small">전투력</span><strong>'+fmtNum(it.combatPower)+'</strong></div>'
           + '</div>';
       }
       wrap.innerHTML = html;
@@ -409,7 +398,7 @@
       setStatus('표시: '+list.length+'개 · 정렬: 아이템 레벨');
     }
 
-    /* ========================= 상세 렌더(스케치 반영) ========================= */
+    /* ========================= 상세 ========================= */
     function openDetail(d){
       document.getElementById('dAvatar').src = d.avatar || '';
       document.getElementById('dName').textContent = d.name;
@@ -418,7 +407,7 @@
       document.getElementById('dIlv').textContent = d.itemLevelText||'-';
       if(d.combatPower && d.combatPower !== '-'){
         document.getElementById('dCpWrap').style.display='inline-flex';
-        document.getElementById('dCp').textContent = d.combatPower;
+        document.getElementById('dCp').textContent = fmtNum(d.combatPower);
       } else {
         document.getElementById('dCpWrap').style.display='none';
       }
@@ -521,12 +510,12 @@
           list.push(results[i].status==='fulfilled' ? results[i].value : mockChar(ADMIN_CHARACTERS[i]));
         }
         renderGrid(list);
-        try{ localStorage.setItem('gridCache_v12', JSON.stringify(list)); }catch(_){}
+        try{ localStorage.setItem('gridCache_v13', JSON.stringify(list)); }catch(_){}
         setStatus('완료');
       }catch(err){
         __dbg('refreshAll ERR', String(err && err.message || err));
         try{
-          var cache = localStorage.getItem('gridCache_v12');
+          var cache = localStorage.getItem('gridCache_v13');
           if(cache){ renderGrid(JSON.parse(cache)); setStatus('오프라인 캐시 표시'); return; }
         }catch(_){}
         var list2 = ADMIN_CHARACTERS.map(mockChar);
