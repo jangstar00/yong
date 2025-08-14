@@ -9,8 +9,8 @@
     :root{
       --bg:#0b0f14; --panel:#0f1720; --muted:#9aa6b2; --gold:#d4af37; --glass:rgba(255,255,255,.04);
       --radius:16px; --radius-sm:12px; --shadow:0 6px 18px rgba(0,0,0,.5);
-      --q-green:#3fb950; --q-yellow:#f2cc60; --q-red:#ff6b6b;
       --pill:#2a3444; --pill-bd:rgba(255,255,255,.12);
+      --q-green:#3fb950; --q-yellow:#f2cc60; --q-red:#ff6b6b;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -46,16 +46,16 @@
     /* 모달 */
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:9999}
     .modal.on{display:flex}
-    .panel{max-width:960px;width:100%;background:#0e141c;border:1px solid rgba(255,255,255,.08);border-radius:16px;display:grid;grid-template-columns:320px 1fr;max-height:90vh;overflow:auto}
+    .panel{max-width:960px;width:100%;background:#0e141c;border:1px solid rgba(255,255,255,.08);border-radius:16px;display:grid;grid-template-columns:360px 1fr;max-height:90vh;overflow:auto}
 
     .pill{display:inline-flex;align-items:center;gap:6px;background:var(--pill);border:1px solid var(--pill-bd);border-radius:999px;padding:2px 8px;font-size:12px}
     .chip{background:linear-gradient(90deg, rgba(212,175,55,.16), transparent);padding:3px 8px;border-radius:999px;color:#d4af37;font-weight:800;font-size:12px}
 
     .detail-left h4{margin:10px 0 6px;color:var(--gold)}
-    .engr-box{min-height:220px;background:#0b121a;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+    .engr-box{min-height:120px;background:#0b121a;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
     .engr-box .chip{font-size:13px}
 
-    .equip-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .equip-left{display:grid;gap:12px}
     .equip-list{display:grid;gap:8px}
     .equip-item{display:grid;grid-template-columns:42px 1fr 90px;gap:10px;align-items:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px}
     .equip-opts{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px}
@@ -71,14 +71,18 @@
     .tag.orange{background:rgba(255,173,80,.18);color:#ffd29a}
     .badge{display:inline-block;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.06);font-size:12px}
 
-    /* 보석 */
-    .gem-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0}
+    /* 소형 아이콘 줄 */
+    .tiny-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .tiny-row img{width:28px;height:28px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,255,255,.12)}
+
+    /* 보석/카드 */
+    .gem-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px dashed rgba(255,255,255,.12)}
     .gem{display:flex;flex-direction:column;align-items:center;gap:2px}
     .gem img{width:28px;height:28px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,255,255,.12)}
     .gem .small{font-size:11px;color:#dcdcdc}
 
-    .cards-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
-    .cards-row .card-item{width:72px}
+    .cards-row{display:flex;gap:10px;flex-wrap:nowrap;overflow:auto}
+    .cards-row .card-item{width:72px;flex:0 0 auto}
     .cards-row .card-item img{width:72px;height:100px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.12)}
     .cards-row .card-item .small{display:block;text-align:center;margin-top:2px}
 
@@ -86,7 +90,7 @@
     .debug-btn{position:fixed;right:12px;bottom:12px;z-index:99999;background:#1d2633;border:1px solid rgba(255,255,255,.2);color:#ffd58a;border-radius:10px;padding:8px 10px;font-size:12px;cursor:pointer}
     .debug-panel{position:fixed;right:12px;bottom:52px;z-index:99999;width:min(92vw,520px);max-height:60vh;overflow:auto;background:#0c121a;border:1px solid rgba(255,255,255,.25);border-radius:10px}
     .debug-panel pre{margin:0;padding:10px;white-space:pre-wrap;word-break:break-all;font-size:12px;color:#cfe1ff}
-    @media (max-width:1100px){ .panel{grid-template-columns:1fr} .equip-wrap{grid-template-columns:1fr} }
+    @media (max-width:1100px){ .panel{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
@@ -115,6 +119,7 @@
   <!-- 상세 모달 -->
   <div id="detailModal" class="modal" aria-modal="true" role="dialog">
     <div class="panel">
+      <!-- LEFT: 아바타/각인/트랙/장비/보석/카드 -->
       <div class="left detail-left" style="padding:14px;border-right:1px solid rgba(255,255,255,.06)">
         <button id="closeDetail" style="position:sticky;left:100%;top:10px;background:transparent;border:0;color:#cfd8e3;font-size:22px;cursor:pointer">✕</button>
         <img id="dAvatar" alt="avatar" style="width:100%;border-radius:12px;object-fit:cover;aspect-ratio:1/1;background:#061016"/>
@@ -126,29 +131,45 @@
             <div class="chip">아이템 레벨 <span id="dIlv">-</span></div>
             <div class="chip" id="dCpWrap" style="display:none">전투력 <span id="dCp">-</span></div>
           </div>
+
           <h4>각인</h4>
           <div id="engrBox" class="engr-box"></div>
-        </div>
-      </div>
 
-      <div class="right" style="padding:14px">
-        <div class="equip-wrap">
-          <div>
-            <div style="font-weight:800;color:var(--gold);margin-bottom:6px">장비</div>
-            <div id="equipList" class="equip-list"></div>
+          <div style="height:8px"></div>
+          <div id="trackWrap">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+              <span class="pill">진화 <b id="evoVal" class="small">-</b></span>
+              <span class="pill">깨달음 <b id="awakVal" class="small">-</b></span>
+              <span class="pill">도약 <b id="leapVal" class="small">-</b></span>
+            </div>
+            <div class="small" id="trackEmpty" style="display:none;color:var(--muted)">데이터 없음</div>
           </div>
-          <div>
-            <div style="font-weight:800;color:var(--gold);margin-bottom:6px">옵션 상세</div>
-            <div id="equipOpts" class="equip-opts"></div>
 
-            <div style="height:10px"></div>
-            <div style="font-weight:800;color:var(--gold);margin-bottom:6px">보석</div>
+          <div style="height:8px"></div>
+          <div class="tiny-row" id="trinketsRow" title="부적 · 나침반 · 문장"></div>
+
+          <div style="height:12px"></div>
+          <div class="equip-left">
+            <div style="font-weight:800;color:var(--gold);margin-bottom:6px">장비</div>
+            <div id="equipListL" class="equip-list"></div>
+
+            <div style="font-weight:800;color:var(--gold);margin:8px 0 6px">보석</div>
             <div class="gem-row" id="gemRow"></div>
 
-            <div style="font-weight:800;color:var(--gold);margin:10px 0 6px">카드</div>
+            <div style="font-weight:800;color:var(--gold);margin:8px 0 6px">카드</div>
             <div id="cardsRow" class="cards-row"></div>
           </div>
         </div>
+      </div>
+
+      <!-- RIGHT: 악세사리 + 옵션 상세 -->
+      <div class="right" style="padding:14px">
+        <div style="font-weight:800;color:var(--gold);margin-bottom:6px">악세사리</div>
+        <div id="equipListR" class="equip-list"></div>
+
+        <div style="height:10px"></div>
+        <div style="font-weight:800;color:var(--gold);margin-bottom:6px">옵션 상세</div>
+        <div id="equipOpts" class="equip-opts"><div class="small">아이템을 클릭하면 옵션이 여기 표시됩니다</div></div>
       </div>
     </div>
   </div>
@@ -171,16 +192,11 @@
     const $ = s=>document.querySelector(s);
 
     /* ===== 디버그 ===== */
-    (function(){
-      let panel=null,out=null,btn=null;
-      const ts=()=>new Date().toLocaleTimeString();
-      const cut=(s,n)=>String(s||'').slice(0,n);
-      window.__dbg=(label,obj)=>{
-        panel=panel||$('#__dbgPanel'); out=out||$('#__dbgOut'); btn=btn||$('#__dbgBtn');
+    (function(){ let panel=null,out=null,btn=null; const ts=()=>new Date().toLocaleTimeString(); const cut=(s,n)=>String(s||'').slice(0,n);
+      window.__dbg=(label,obj)=>{ panel=panel||$('#__dbgPanel'); out=out||$('#__dbgOut'); btn=btn||$('#__dbgBtn');
         if(btn && !btn.__bind){btn.__bind=true; btn.addEventListener('click',()=>{panel.style.display=panel.style.display==='block'?'none':'block';});}
         let j; try{ j=typeof obj==='string'?obj:JSON.stringify(obj,null,2);}catch{ j=String(obj); }
-        out.textContent=`[${ts()}] ${label}\n${cut(j,20000)}\n\n`+out.textContent;
-      };
+        out.textContent=`[${ts()}] ${label}\n${cut(j,20000)}\n\n`+out.textContent; };
     })();
 
     /* ===== 배너 ===== */
@@ -207,7 +223,11 @@
     const setStatus=t=>$('#status').textContent=t;
     const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
     const strip=s=>String(s||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
-    const fmtNum=n=>n==null||n==='-'?'-':Number(n).toLocaleString();
+    const fmtNum=n=>{
+      if(n==null||n==='-') return '-';
+      const v = (typeof n==='number') ? n : Number(String(n).replace(/[^0-9.-]/g,''));
+      return Number.isFinite(v) ? v.toLocaleString() : String(n);
+    };
     const gradeColorByName=g=>{
       g=String(g||''); if(/고대/.test(g))return'#d4af37'; if(/유물/.test(g))return'#f44336';
       if(/전설/.test(g))return'#ffa726'; if(/영웅/.test(g))return'#b388ff'; if(/희귀/.test(g))return'#64b5f6';
@@ -240,42 +260,30 @@
     }
 
     function extractAffixOptions(tooltipRaw){
-      // 최종적으로 [{rank:'상|중|하', text:'...'}]
-      const lines = flattenTooltip(tooltipRaw)
-        .filter(s=>/^(상|중|하)\s/.test(s));
-      return lines.map(s=>{
-        const rank=s[0]; return {rank, text:s.replace(/^(상|중|하)\s*/,'').trim()};
-      });
+      const lines = flattenTooltip(tooltipRaw).filter(s=>/^(상|중|하)\s/.test(s));
+      return lines.map(s=>({rank:s[0], text:s.replace(/^(상|중|하)\s*/,'').trim()}));
     }
-
     function parseAccessoryDetails(tooltip){
       const L=flattenTooltip(tooltip);
       const J=L.join(' ');
       const ilv=(J.match(/아이템\s*레벨\s*([0-9,]+)/i)||[])[1];
       const tier=(J.match(/티어\s*([0-9])/i)||[])[1];
       const q=(J.match(/품질\s*([0-9]{1,3}(?:\.[0-9]+)?)/i)||[])[1];
-      const options=L.filter(s=>/^(상|중|하)\s/.test(s)).map(s=>{
-        const rank=s[0]; return {rank, text:s.replace(/^(상|중|하)\s*/,'')};
-      });
+      const options=L.filter(s=>/^(상|중|하)\s/.test(s)).map(s=>({rank:s[0], text:s.replace(/^(상|중|하)\s*/,'')}));
       return {itemLevel:ilv?Number(ilv.replace(/,/g,'')):null, tier:tier?Number(tier):null, quality:q?Number(q):null, options};
     }
-
     function parseElixirFromTooltip(tooltip){
-      const L=flattenTooltip(tooltip);
-      if(!L.length) return null;
+      const L=flattenTooltip(tooltip); if(!L.length) return null;
       const joined=L.join(' ');
-      let name=null;
-      const mName=joined.match(/\[엘릭서\][^가-힣A-Za-z]*(?:<[^>]+>)? *([가-힣A-Za-z ]+엘릭서)/i);
+      let name=null; const mName=joined.match(/\[엘릭서\][^A-Za-z가-힣]*(?:<[^>]+>)?\s*([가-힣A-Za-z ]+엘릭서)/i);
       if(mName) name=strip(mName[1]);
-      const perks=[];
-      L.forEach(line=>{
+      const perks=[]; L.forEach(line=>{
         const m=line.match(/\[(공용|무기|상의|하의|장갑|어깨)\]\s*([^L]+?)\s*Lv\.?\s*([0-9]+)/);
         if(m) perks.push({slot:m[1], stat:strip(m[2]), lv:Number(m[3])});
       });
       if(!name && !perks.length) return null;
       return {name, perks};
     }
-
     function parseMeta(tooltip, name, grade){
       const L=flattenTooltip(tooltip);
       const plain=L.join(' ')+' '+(name||' ')+' '+(grade||' ');
@@ -289,13 +297,7 @@
       if(mE1) elixir={percent:Number(mE1[1])};
       const mE2=plain.match(/엘릭서[^L]*Lv\.?\s*([0-9]{1,2})/i);
       if(!elixir && mE2) elixir={level:Number(mE2[1])};
-      return {
-        enhance:enhance?Number(enhance):null,
-        upper: upperX?Number(upperX): (upperStage?Number(upperStage):null),
-        step: step?Number(step):null,
-        tier: tier?('T'+tier):null,
-        elixir
-      };
+      return { enhance:enhance?Number(enhance):null, upper: upperX?Number(upperX): (upperStage?Number(upperStage):null), step: step?Number(step):null, tier: tier?('T'+tier):null, elixir };
     }
 
     /* ===== API ===== */
@@ -312,7 +314,8 @@
           ArmoryProfile:{ CharacterName:d.name, ServerName:d.server, CharacterClassName:d.cls, CharacterImage:d.avatar, ItemMaxLevel:d.itemLevelText, Stats:d.stats },
           ArmoryEquipment:d.equipment,
           ArmoryEngraving:{ Engravings:(d.engraves||[]).map(s=>{ const m=String(s).match(/^(.+?)\s*Lv\.\s*([0-9]+)/); return {Name:m?m[1]:s,Level:m?Number(m[2]):null}; }) },
-          _cards:d.cards,_gems:d.gems,_combatPower:d.combatPower
+          _cards:d.cards,_gems:d.gems,_combatPower:d.combatPower,
+          _tracks:d.tracks||d.progress||null
         });
       }catch(e){ __dbg('ERR '+name, String(e.message||e)); return mockChar(name); }
     }
@@ -333,15 +336,16 @@
           const nm=x.Name||'', gr=x.Grade||'', tp=x.Tooltip||'', ic=x.Icon||'';
           const qAny = (x.Quality ?? x.quality ?? x.qualityValue ?? x.QualityValue ?? null);
           const quality = (qAny!=null) ? Number(qAny) : null;
-          const isAcc=/(목걸이|귀걸이|반지)/.test(String(x.Type||x.Slot||'')+' '+nm);
-          const isBracelet=/팔찌/.test(String(x.Type||x.Slot||'')+' '+nm);
-          const isStone=/스톤|어빌리티\s*스톤/.test(String(x.Type||x.Slot||'')+' '+nm);
+          const tstr=String(x.Type||x.Slot||'')+' '+nm;
+          const isAcc=/(목걸이|귀걸이|반지|어빌리티\s*스톤|스톤|팔찌)/.test(tstr);
+          const isBracelet=/팔찌/.test(tstr);
+          const isStone=/스톤|어빌리티\s*스톤/.test(tstr);
           return {
             type:x.Type||x.Slot||'',
             name:nm, grade:gr, icon:ic,
             quality: Number.isFinite(quality)? quality : null,
             tooltip:tp,
-            opt: extractAffixOptions(tp),         // [{rank,text}]
+            opt: extractAffixOptions(tp),
             meta: parseMeta(tp,nm,gr),
             acc: isAcc? parseAccessoryDetails(tp) : null,
             elixir: parseElixirFromTooltip(tp),
@@ -350,10 +354,11 @@
           };
         }),
         engraves:engrs,
-        cards:raw._cards||null, gems:raw._gems||null
+        cards:raw._cards||null, gems:raw._gems||null,
+        tracks:raw._tracks||null
       };
     }
-    function mockChar(name){ const ilv=1500+Math.floor(Math.random()*300); return {name,server:'-',cls:'-',avatar:'',itemLevelText:ilv.toFixed(2),itemLevelNum:ilv,combatPower:'-',stats:[],equipment:[],engraves:[],cards:null,gems:null}; }
+    function mockChar(name){ const ilv=1500+Math.floor(Math.random()*300); return {name,server:'-',cls:'-',avatar:'',itemLevelText:ilv.toFixed(2),itemLevelNum:ilv,combatPower:'-',stats:[],equipment:[],engraves:[],cards:null,gems:null,tracks:null}; }
 
     /* ===== GRID ===== */
     function renderSkeleton(){
@@ -368,7 +373,7 @@
     function renderGrid(list){
       const wrap=$('#charGrid'); wrap.innerHTML='';
       list.sort((a,b)=>(b.itemLevelNum||0)-(a.itemLevelNum||0));
-      list.forEach((it,i)=>{
+      list.forEach((it)=>{
         const avatar=it.avatar||'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect width="300" height="300" fill="#061016"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9aa6b2" font-size="16">NO IMAGE</text></svg>');
         const card=document.createElement('div'); card.className='card-char';
         card.innerHTML=`
@@ -399,17 +404,41 @@
       if(!engr.length) engrBox.innerHTML='<span class="small">각인 정보 없음</span>';
       else engr.forEach(x=>{ const sp=document.createElement('span'); sp.className='chip'; sp.textContent=x; engrBox.appendChild(sp); });
 
-      // 장비
-      const list=d.equipment||[]; const wrap=$('#equipList'); wrap.innerHTML='';
-      const optsBox=$('#equipOpts'); optsBox.innerHTML='<div class="small">아이템을 클릭하면 옵션이 오른쪽에 표시됩니다</div>';
+      // 트랙(진화/깨달음/도약)
+      const tr=d.tracks||{}; const hasTrack = tr && (tr.evolution||tr.awakening||tr.leap);
+      $('#trackEmpty').style.display = hasTrack? 'none':'block';
+      $('#evoVal').textContent = tr.evolution!=null? tr.evolution : '-';
+      $('#awakVal').textContent = tr.awakening!=null? tr.awakening : '-';
+      $('#leapVal').textContent = tr.leap!=null? tr.leap : '-';
+
+      // 장비 분류
+      const list=d.equipment||[];
+      const leftSlots=/무기|투구|모자|상의|하의|장갑|어깨/;
+      const rightSlots=/목걸이|귀걸이|반지|스톤|어빌리티\s*스톤|팔찌/;
+      const trinketSlots=/부적|나침반|문장/;
+
+      const left=list.filter(e=>leftSlots.test(e.type+' '+e.name));
+      const right=list.filter(e=>rightSlots.test(e.type+' '+e.name));
+      const trinkets=list.filter(e=>trinketSlots.test(e.type+' '+e.name));
+
+      // 부적/나침반/문장 소형 아이콘
+      const triRow=$('#trinketsRow'); triRow.innerHTML='';
+      if(trinkets.length){
+        trinkets.forEach(t=>{
+          const img=document.createElement('img'); img.src=t.icon||'https://via.placeholder.com/28'; img.alt=''; img.title=t.name||'';
+          triRow.appendChild(img);
+        });
+      }
+
+      // 왼쪽 장비
+      const wrapL=$('#equipListL'); wrapL.innerHTML='';
+      const optsBox=$('#equipOpts'); optsBox.innerHTML='<div class="small">아이템을 클릭하면 옵션이 여기 표시됩니다</div>';
       const pct=x=>Math.max(0,Math.min(100,Number(x)||0));
 
-      list.forEach((e,idx)=>{
+      function equipRow(e){
         const row=document.createElement('div'); row.className='equip-item'; row.tabIndex=0;
-
         const icon=document.createElement('img');
-        icon.src=e.icon||'https://via.placeholder.com/42';
-        icon.alt=''; icon.style.cssText='width:42px;height:42px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.12)';
+        icon.src=e.icon||'https://via.placeholder.com/42'; icon.alt=''; icon.style.cssText='width:42px;height:42px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.12)';
 
         const mid=document.createElement('div');
         const metaBits=[];
@@ -424,14 +453,13 @@
           ${metaBits.length? `<span class="badge">${metaBits.join(' · ')}</span>`:''}
         </div>`;
 
-        const subPills=[];
         const acc=e.acc;
         const qsrc = (acc && typeof acc.quality==='number') ? acc.quality : (typeof e.quality==='number'? e.quality : null);
+        const subPills=[];
         if(typeof qsrc==='number') subPills.push('품질 '+qsrc);
         if(acc && acc.itemLevel) subPills.push('Lv.'+acc.itemLevel);
         if(acc && acc.tier) subPills.push('T'+acc.tier);
         const subHtml = subPills.length? `<div class="opt-mini">${subPills.map(t=>`<span class="pill">${esc(t)}</span>`).join(' ')}</div>` : '';
-
         mid.innerHTML=title+subHtml;
 
         const right=document.createElement('div');
@@ -439,10 +467,8 @@
           ? `<div class="qbar"><i style="width:${pct(qsrc)}%;background:linear-gradient(90deg,var(--q-green),var(--q-yellow),var(--q-red))"></i></div><div class="small" style="margin-top:4px;text-align:center">${qsrc}</div>`
           : `<div class="small" style="text-align:center;color:var(--muted)">-</div>`;
 
-        // 클릭 시 옵션 패널 채우기
         row.addEventListener('click', ()=>{
           const opts=[];
-          // 엘릭서 먼저
           if(e.elixir){
             const head = `<div class="pill">엘릭서 ${e.elixir.name?('· '+esc(e.elixir.name)) : ''}</div>`;
             const perkHtml = (e.elixir.perks||[]).map(p=>
@@ -450,7 +476,6 @@
             ).join('');
             opts.push(head, perkHtml);
           }
-          // 상/중/하 옵션
           const arr = (e.acc && e.acc.options && e.acc.options.length) ? e.acc.options : (e.opt||[]);
           if(arr.length){
             opts.push('<div style="height:6px"></div>');
@@ -463,8 +488,6 @@
           }else{
             opts.push('<div class="small">부여 옵션 없음</div>');
           }
-
-          // 팔찌/스톤 보조
           if(e.bracelet && (e.bracelet.options||[]).length){
             opts.push('<div style="height:6px"></div><div class="pill">팔찌</div>');
             e.bracelet.options.forEach(o=>{ opts.push(`<div class="small">· ${esc(o.stat)} ${esc(o.value)}</div>`); });
@@ -473,16 +496,20 @@
             opts.push('<div style="height:6px"></div><div class="pill">어빌리티 스톤</div>');
             e.stone.lines.forEach(o=>{ opts.push(`<div class="small">· ${esc(o.name)}${o.lv?(' Lv.'+o.lv):''}</div>`); });
           }
-
           optsBox.innerHTML = opts.join('');
         });
 
         row.appendChild(icon); row.appendChild(mid); row.appendChild(right);
-        wrap.appendChild(row);
-        if(idx===0) row.click(); // 첫 아이템 자동 표시
-      });
+        return row;
+      }
 
-      // 보석 (아이콘 기반)
+      left.forEach((e,i)=>{ const row=equipRow(e); wrapL.appendChild(row); if(i===0) row.click(); });
+
+      // 오른쪽 악세사리
+      const wrapR=$('#equipListR'); wrapR.innerHTML='';
+      right.forEach(e=>{ wrapR.appendChild(equipRow(e)); });
+
+      // 보석
       const gemRow=$('#gemRow'); gemRow.innerHTML='';
       const g=d.gems||{};
       const items = (g.list && Array.isArray(g.list)) ? g.list
@@ -507,7 +534,7 @@
       }
       if(g.avgLevel){ const info=document.createElement('span'); info.className='small'; info.style.marginLeft='6px'; info.textContent='평균 Lv. '+g.avgLevel; gemRow.appendChild(info); }
 
-      // 카드
+      // 카드 한 줄
       const cardsRow=$('#cardsRow'); cardsRow.innerHTML='';
       const cs=d.cards||{}; if((cs.list||[]).length){
         cs.list.forEach(it=>{ const c=document.createElement('div'); c.className='card-item';
@@ -525,11 +552,11 @@
         const results = await Promise.allSettled(ADMIN_CHARACTERS.map(fetchChar));
         const list = results.map((r,i)=> r.status==='fulfilled'? r.value : mockChar(ADMIN_CHARACTERS[i]));
         renderGrid(list);
-        try{ localStorage.setItem('gridCache_v16', JSON.stringify(list)); }catch(_){}
+        try{ localStorage.setItem('gridCache_v17', JSON.stringify(list)); }catch(_){}
         setStatus('완료');
       }catch(err){
         __dbg('refreshAll ERR', String(err && err.message || err));
-        try{ const cache = localStorage.getItem('gridCache_v16'); if(cache){ renderGrid(JSON.parse(cache)); setStatus('오프라인 캐시 표시'); return; } }catch(_){}
+        try{ const cache = localStorage.getItem('gridCache_v17'); if(cache){ renderGrid(JSON.parse(cache)); setStatus('오프라인 캐시 표시'); return; } }catch(_){}
         renderGrid(ADMIN_CHARACTERS.map(mockChar)); setStatus('네트워크 실패: 모의 데이터 표시');
       }
     }
