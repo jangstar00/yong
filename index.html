@@ -7,73 +7,79 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg:#0b0f14; --panel:#0f1720; --muted:#9aa6b2; --gold:#d4af37; --glass:rgba(255,255,255,.04);
-      --radius:16px; --radius-sm:12px; --shadow:0 6px 18px rgba(0,0,0,.5);
-      --pill:#2a3444; --pill-bd:rgba(255,255,255,.12);
-      --q-green:#3fb950; --q-yellow:#f2cc60; --q-red:#ff6b6b;
+      --bg:#0b0f14; --panel:#0f1720; --muted:#95a3b3; --gold:#d4af37; --glass:rgba(255,255,255,.04);
+      --radius:14px; --radius-sm:10px; --shadow:0 6px 18px rgba(0,0,0,.5);
+      --pill:#222c3b; --pill-bd:rgba(255,255,255,.12);
+      --q-green:#36c86b; --q-yellow:#e5c04b; --q-red:#ff6b6b;
+      --fz-base:14px; --fz-sm:12px; --fz-xs:11px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0; padding:clamp(10px, 2.8vw, 22px);
+    body{margin:0; padding:clamp(10px, 2.6vw, 20px);
       font-family:'Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
       background:linear-gradient(180deg,#071016 0%, #07131a 60%);
-      color:#e6eef6; line-height:1.55;}
-    .container{max-width:1000px;margin:0 auto;display:grid;gap:16px}
+      color:#e8eef6; line-height:1.45; font-size:var(--fz-base);}
+    .container{max-width:1000px;margin:0 auto;display:grid;gap:14px}
 
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:var(--radius);padding:16px;border:1px solid rgba(255,255,255,0.06);box-shadow:var(--shadow)}
-    .small{font-size:12px;color:var(--muted)}
-    button{background:transparent;border:1px solid rgba(255,255,255,0.12);padding:10px 14px;border-radius:12px;color:var(--gold);cursor:pointer}
+      border-radius:var(--radius);padding:14px;border:1px solid rgba(255,255,255,0.06);box-shadow:var(--shadow)}
+    .small{font-size:var(--fz-sm);color:var(--muted)}
+    .xsmall{font-size:var(--fz-xs);color:var(--muted)}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.12);padding:8px 12px;border-radius:10px;color:var(--gold);cursor:pointer}
     button:active{transform:translateY(1px)}
 
-    .top-banner,.bottom-banner{background:var(--glass);border-radius:var(--radius-sm);min-height:110px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .top-banner,.bottom-banner{background:var(--glass);border-radius:var(--radius-sm);min-height:96px;display:flex;align-items:center;justify-content:center;overflow:hidden}
     .top-banner img,.bottom-banner img{width:100%;height:100%;object-fit:cover;display:block}
 
-    .controls{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-    .card-char{background:var(--panel);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease}
+    .controls{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .card-char{background:var(--panel);border-radius:var(--radius);padding:10px;display:flex;flex-direction:column;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease}
     .card-char:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.5)}
-    .card-char img{width:100%;aspect-ratio:1/1;border-radius:12px;object-fit:cover;background:#061016}
-    .name{margin:8px 0 2px;font-weight:900;color:var(--gold)}
-    .meta{font-size:12px;color:var(--muted)}
-    .row{display:flex;justify-content:space-between;margin-top:6px}
+    .card-char img{width:100%;aspect-ratio:1/1;border-radius:10px;object-fit:cover;background:#061016}
+    .name{margin:6px 0 2px;font-weight:900;color:var(--gold);font-size:15px}
+    .meta{font-size:var(--fz-xs);color:var(--muted)}
+    .row{display:flex;justify-content:space-between;margin-top:4px;font-size:var(--fz-sm)}
 
     /* 모달 */
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:9999}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:12px;z-index:9999}
     .modal.on{display:flex}
-    .panel{max-width:1040px;width:100%;background:#0e141c;border:1px solid rgba(255,255,255,.08);border-radius:16px;display:grid;grid-template-columns:360px 1fr;max-height:90vh;overflow:auto}
+    .panel{max-width:1040px;width:100%;background:#0e141c;border:1px solid rgba(255,255,255,.08);border-radius:16px;display:grid;grid-template-columns:340px 1fr;max-height:90vh;overflow:auto}
 
-    .pill{display:inline-flex;align-items:center;gap:6px;background:var(--pill);border:1px solid var(--pill-bd);border-radius:999px;padding:2px 8px;font-size:12px}
-    .chip{background:linear-gradient(90deg, rgba(212,175,55,.16), transparent);padding:3px 8px;border-radius:999px;color:#d4af37;font-weight:800;font-size:12px}
+    .pill{display:inline-flex;align-items:center;gap:6px;background:var(--pill);border:1px solid var(--pill-bd);border-radius:999px;padding:2px 8px;font-size:var(--fz-xs)}
+    .chip{background:linear-gradient(90deg, rgba(212,175,55,.16), transparent);padding:2px 8px;border-radius:999px;color:#d4af37;font-weight:800;font-size:var(--fz-xs)}
 
-    .detail-left h4{margin:10px 0 6px;color:var(--gold)}
-    .engr-box{min-height:120px;background:#0b121a;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
-    .engr-box .chip{font-size:13px}
+    .detail-left h4{margin:8px 0 6px;color:var(--gold);font-size:13px}
+    .engr-box{min-height:96px;background:#0b121a;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
 
-    /* 보석/카드/소형아이콘 */
-    .tiny-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .tiny-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .tiny-row img{width:36px;height:36px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.12)}
-    .gem-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px dashed rgba(255,255,255,.12)}
+    .gem-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-top:1px dashed rgba(255,255,255,.12)}
     .gem{display:flex;flex-direction:column;align-items:center;gap:2px}
-    .gem img{width:28px;height:28px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,255,255,.12)}
-    .gem .small{font-size:11px;color:#dcdcdc}
-    .cards-row{display:flex;gap:10px;flex-wrap:wrap}
-    .cards-row .card-item{width:64px;flex:0 0 auto}
-    .cards-row .card-item img{width:64px;height:88px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.12)}
-    .cards-row .card-item .small{display:block;text-align:center;margin-top:2px}
+    .gem img{width:26px;height:26px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,255,255,.12)}
+    .cards-row{display:flex;gap:8px;flex-wrap:wrap}
+    .cards-row .card-item{width:60px}
+    .cards-row .card-item img{width:60px;height:82px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.12)}
+    .cards-row .card-item .xsmall{display:block;text-align:center;margin-top:2px}
 
     /* 오른쪽 2열(장비/악세사리) */
-    .right-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    .section-title{font-weight:800;color:var(--gold);margin-bottom:6px}
+    .right-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .section-title{font-weight:800;color:var(--gold);margin-bottom:6px;font-size:13px}
 
-    .equip-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    .equip-card{display:grid;grid-template-columns:42px 1fr;gap:8px;align-items:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px;min-height:56px}
-    .equip-card img{width:42px;height:42px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.12)}
-    .equip-title{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    .equip-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .equip-card{display:grid;grid-template-columns:40px 1fr;gap:8px;align-items:start;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px;min-height:54px}
+    .equip-card img{width:40px;height:40px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,.12)}
+    .equip-title{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px}
     .equip-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
     .qbar{height:6px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}
     .qbar>i{display:block;height:6px;width:0}
-    .q-badge{font-size:11px;color:#eaeaea}
+    .q-badge{font-size:var(--fz-xs);color:#eaeaea}
+
+    /* 유효 옵션 뱃지 */
+    .badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+    .badge{display:inline-flex;gap:4px;align-items:center;padding:2px 6px;border-radius:999px;border:1px solid rgba(255,255,255,.12);font-size:10.5px}
+    .b-high{background:rgba(255,173,80,.14);color:#ffd29a}
+    .b-mid{background:rgba(162,128,255,.16);color:#cdbaff}
+    .b-low{background:rgba(77,171,245,.14);color:#a7d8ff}
 
     @media (max-width:1100px){ .panel{grid-template-columns:1fr} .right-wrap{grid-template-columns:1fr} }
     @media (max-width:720px){ .equip-grid{grid-template-columns:1fr} }
@@ -83,7 +89,7 @@
   <div class="container">
     <header>
       <div style="display:flex;align-items:baseline;gap:8px">
-        <h2 style="margin:0;color:var(--gold)">lostamen</h2>
+        <h2 style="margin:0;color:var(--gold);font-size:18px">lostamen</h2>
         <span class="small">다중 캐릭터 보드</span>
       </div>
       <div style="margin-left:auto" class="small" id="status">준비됨 · 1시간 자동 갱신</div>
@@ -106,44 +112,44 @@
   <div id="detailModal" class="modal" aria-modal="true" role="dialog">
     <div class="panel">
       <!-- LEFT -->
-      <div class="left detail-left" style="padding:14px;border-right:1px solid rgba(255,255,255,.06)">
-        <button id="closeDetail" style="position:sticky;left:100%;top:10px;background:transparent;border:0;color:#cfd8e3;font-size:22px;cursor:pointer">✕</button>
-        <img id="dAvatar" alt="avatar" style="width:100%;border-radius:12px;object-fit:cover;aspect-ratio:1/1;background:#061016"/>
-        <div style="margin-top:10px">
-          <div style="font-weight:900;color:var(--gold)" id="dName">-</div>
-          <div class="small" id="dServer">-</div>
-          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-            <div class="chip">직업 <span id="dCls">-</span></div>
-            <div class="chip">아이템 레벨 <span id="dIlv">-</span></div>
-            <div class="chip" id="dCpWrap" style="display:none">전투력 <span id="dCp">-</span></div>
+      <div class="left detail-left" style="padding:12px;border-right:1px solid rgba(255,255,255,.06)">
+        <button id="closeDetail" style="position:sticky;left:100%;top:8px;background:transparent;border:0;color:#cfd8e3;font-size:20px;cursor:pointer">✕</button>
+        <img id="dAvatar" alt="avatar" style="width:100%;border-radius:10px;object-fit:cover;aspect-ratio:1/1;background:#061016"/>
+        <div style="margin-top:8px">
+          <div style="font-weight:900;color:var(--gold);font-size:16px" id="dName">-</div>
+          <div class="xsmall" id="dServer">-</div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+            <div class="pill">직업 <span id="dCls" style="margin-left:4px">-</span></div>
+            <div class="pill">아이템 레벨 <span id="dIlv" style="margin-left:4px">-</span></div>
+            <div class="pill" id="dCpWrap" style="display:none">전투력 <span id="dCp" style="margin-left:4px">-</span></div>
           </div>
 
           <h4>각인</h4>
           <div id="engrBox" class="engr-box"></div>
 
-          <div style="height:8px"></div>
+          <div style="height:6px"></div>
           <div id="trackWrap">
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
-              <span class="pill">진화 <b id="evoVal" class="small">-</b></span>
-              <span class="pill">깨달음 <b id="awakVal" class="small">-</b></span>
-              <span class="pill">도약 <b id="leapVal" class="small">-</b></span>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+              <span class="pill">진화 <b id="evoVal" class="xsmall" style="margin-left:4px">-</b></span>
+              <span class="pill">깨달음 <b id="awakVal" class="xsmall" style="margin-left:4px">-</b></span>
+              <span class="pill">도약 <b id="leapVal" class="xsmall" style="margin-left:4px">-</b></span>
             </div>
           </div>
 
-          <div style="height:12px"></div>
-          <div style="font-weight:800;color:var(--gold);margin:8px 0 6px">보석</div>
+          <div style="height:8px"></div>
+          <div style="font-weight:800;color:var(--gold);margin:6px 0 6px;font-size:13px">보석</div>
           <div class="gem-row" id="gemRow"></div>
 
-          <div style="font-weight:800;color:var(--gold);margin:8px 0 6px">카드</div>
+          <div style="font-weight:800;color:var(--gold);margin:6px 0 6px;font-size:13px">카드</div>
           <div id="cardsRow" class="cards-row"></div>
 
-          <div style="height:8px"></div>
+          <div style="height:6px"></div>
           <div class="tiny-row" id="trinketsRow" title="부적 · 나침반 · 문장"></div>
         </div>
       </div>
 
       <!-- RIGHT -->
-      <div class="right" style="padding:14px">
+      <div class="right" style="padding:12px">
         <div class="right-wrap">
           <div>
             <div class="section-title">장비</div>
@@ -159,9 +165,9 @@
   </div>
 
   <!-- 디버그 -->
-  <button id="__dbgBtn" class="debug-btn" style="position:fixed;right:12px;bottom:12px;background:#1d2633;border:1px solid rgba(255,255,255,.2);color:#ffd58a;border-radius:10px;padding:8px 10px;font-size:12px;cursor:pointer">디버그</button>
-  <div id="__dbgPanel" class="debug-panel" style="display:none;position:fixed;right:12px;bottom:52px;z-index:99999;width:min(92vw,520px);max-height:60vh;overflow:auto;background:#0c121a;border:1px solid rgba(255,255,255,.25);border-radius:10px">
-    <pre id="__dbgOut" style="margin:0;padding:10px;white-space:pre-wrap;word-break:break-all;font-size:12px;color:#cfe1ff"></pre>
+  <button id="__dbgBtn" class="debug-btn" style="position:fixed;right:12px;bottom:12px;background:#1d2633;border:1px solid rgba(255,255,255,.2);color:#ffd58a;border-radius:10px;padding:6px 8px;font-size:12px;cursor:pointer">디버그</button>
+  <div id="__dbgPanel" class="debug-panel" style="display:none;position:fixed;right:12px;bottom:44px;z-index:99999;width:min(92vw,520px);max-height:60vh;overflow:auto;background:#0c121a;border:1px solid rgba(255,255,255,.25);border-radius:10px">
+    <pre id="__dbgOut" style="margin:0;padding:8px;white-space:pre-wrap;word-break:break-all;font-size:12px;color:#cfe1ff"></pre>
   </div>
 
   <script>
@@ -234,9 +240,13 @@
         .filter(Boolean);
     }
     function extractAffixOptions(tooltipRaw){
+      // 상/중/하 라인만 뽑기
       return flattenTooltip(tooltipRaw)
         .filter(s=>/^(상|중|하)\s/.test(s))
-        .map(s=>({rank:s[0], text:s.replace(/^(상|중|하)\s*/,'').trim()}));
+        .map(s=>{
+          const rank=s[0]; const text=s.replace(/^(상|중|하)\s*/,'').trim();
+          return { rank, text };
+        });
     }
     function parseAccessoryDetails(tooltip){
       const L=flattenTooltip(tooltip);
@@ -316,9 +326,9 @@
       const wrap=$('#charGrid'); wrap.innerHTML='';
       ADMIN_CHARACTERS.forEach(()=>{ wrap.innerHTML+=`
         <div class="card-char">
-          <div style="width:100%;aspect-ratio:1/1;border-radius:12px;background:linear-gradient(90deg, rgba(255,255,255,.06), transparent)"></div>
-          <div style="height:16px;border-radius:8px;margin-top:8px;background:rgba(255,255,255,.06)"></div>
-          <div style="height:12px;border-radius:6px;margin-top:6px;background:rgba(255,255,255,.06);opacity:.6"></div>
+          <div style="width:100%;aspect-ratio:1/1;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,.06), transparent)"></div>
+          <div style="height:14px;border-radius:8px;margin-top:6px;background:rgba(255,255,255,.06)"></div>
+          <div style="height:10px;border-radius:6px;margin-top:4px;background:rgba(255,255,255,.06);opacity:.6"></div>
         </div>`; });
     }
     function renderGrid(list){
@@ -332,8 +342,8 @@
           <b class="name">${esc(it.name)}</b>
           <div class="meta">서버: ${esc(it.server)}</div>
           <div class="meta">직업: ${esc(it.cls||'-')}</div>
-          <div class="row"><span class="small">아이템 레벨</span><strong>${esc(it.itemLevelText||'-')}</strong></div>
-          <div class="row"><span class="small">전투력</span><strong>${fmtNum(it.combatPower)}</strong></div>`;
+          <div class="row"><span class="xsmall">아이템 레벨</span><strong style="font-size:13px">${esc(it.itemLevelText||'-')}</strong></div>
+          <div class="row"><span class="xsmall">전투력</span><strong style="font-size:13px">${fmtNum(it.combatPower)}</strong></div>`;
         card.addEventListener('click',()=>openDetail(it));
         wrap.appendChild(card);
       });
@@ -352,7 +362,7 @@
 
       // 각인
       const engr=d.engraves||[]; const engrBox=$('#engrBox'); engrBox.innerHTML='';
-      if(!engr.length) engrBox.innerHTML='<span class="small">각인 정보 없음</span>';
+      if(!engr.length) engrBox.innerHTML='<span class="xsmall">각인 정보 없음</span>';
       else engr.forEach(x=>{ const sp=document.createElement('span'); sp.className='chip'; sp.textContent=x; engrBox.appendChild(sp); });
 
       // 트랙
@@ -374,20 +384,12 @@
       const triRow=$('#trinketsRow'); triRow.innerHTML='';
       trinkets.forEach(t=>{ const img=document.createElement('img'); img.src=t.icon||'https://via.placeholder.com/36'; img.alt=''; img.title=t.name||''; triRow.appendChild(img); });
 
-      // 정렬 약간 손봄
-      const slotOrder = s => {
-        if(/무기/.test(s)) return 0;
-        if(/투구|모자/.test(s)) return 1;
-        if(/상의/.test(s)) return 2;
-        if(/하의/.test(s)) return 3;
-        if(/장갑/.test(s)) return 4;
-        if(/어깨/.test(s)) return 5;
-        if(/목걸이/.test(s)) return 10;
-        if(/귀걸이/.test(s)) return 11;
-        if(/반지/.test(s)) return 12;
-        if(/스톤|어빌리티/.test(s)) return 13;
-        if(/팔찌/.test(s)) return 14;
-        return 99;
+      // 정렬
+      const slotOrder=s=>{
+        if(/무기/.test(s)) return 0; if(/투구|모자/.test(s)) return 1; if(/상의/.test(s)) return 2;
+        if(/하의/.test(s)) return 3; if(/장갑/.test(s)) return 4; if(/어깨/.test(s)) return 5;
+        if(/목걸이/.test(s)) return 10; if(/귀걸이/.test(s)) return 11; if(/반지/.test(s)) return 12;
+        if(/스톤|어빌리티/.test(s)) return 13; if(/팔찌/.test(s)) return 14; return 99;
       };
       left.sort((a,b)=>slotOrder(a.type+a.name)-slotOrder(b.type+b.name));
       right.sort((a,b)=>slotOrder(a.type+a.name)-slotOrder(b.type+b.name));
@@ -397,9 +399,18 @@
 
       const pct=x=>Math.max(0,Math.min(100,Number(x)||0));
 
-      function equipCard(e){
+      const makeBadges=(opts)=>{
+        if(!opts||!opts.length) return '';
+        const pills = opts.map(o=>{
+          const cls = o.rank==='상'?'b-high':(o.rank==='중'?'b-mid':'b-low');
+          return `<span class="badge ${cls}">${o.rank} ${esc(o.text)}</span>`;
+        }).join('');
+        return `<div class="badges">${pills}</div>`;
+      };
+
+      function equipCard(e, isAccessory){
         const card=document.createElement('div'); card.className='equip-card';
-        const icon=document.createElement('img'); icon.src=e.icon||'https://via.placeholder.com/42'; icon.alt='';
+        const icon=document.createElement('img'); icon.src=e.icon||'https://via.placeholder.com/40'; icon.alt='';
         const mid=document.createElement('div');
 
         const metaBits=[];
@@ -408,32 +419,45 @@
           if(e.meta.upper) metaBits.push('상재련 '+e.meta.upper);
           else if(e.meta.step) metaBits.push(e.meta.step+'단');
         }
-
         const title=document.createElement('div'); title.className='equip-title';
-        title.innerHTML = `<span class="small" style="color:${gradeColorByName(e.grade)}">${esc(e.grade||'')}</span>
-                           <b>${esc(e.name||'')}</b>
+        title.innerHTML = `<span class="xsmall" style="color:${gradeColorByName(e.grade)}">${esc(e.grade||'')}</span>
+                           <b style="font-size:13px">${esc(e.name||'')}</b>
                            ${metaBits.length? `<span class="pill">${metaBits.join(' · ')}</span>`:''}`;
         mid.appendChild(title);
 
-        // 품질/수치 간단 표시
+        // 품질/레벨 간단 정보
         const acc=e.acc;
         const qsrc = (acc && typeof acc.quality==='number') ? acc.quality : (typeof e.quality==='number'? e.quality : null);
+        const infoBits=[];
+        if(qsrc!=null) infoBits.push('품질 '+qsrc);
+        if(acc && acc.itemLevel) infoBits.push('Lv.'+acc.itemLevel);
+        if(acc && acc.tier) infoBits.push('T'+acc.tier);
+        if(infoBits.length){
+          const meta=document.createElement('div'); meta.className='equip-meta';
+          meta.innerHTML = infoBits.map(t=>`<span class="pill">${esc(t)}</span>`).join(' ');
+          mid.appendChild(meta);
+        }
         if(qsrc!=null){
           const qwrap=document.createElement('div'); qwrap.style.marginTop='4px';
-          qwrap.innerHTML=`<div class="qbar"><i style="width:${pct(qsrc)}%;background:linear-gradient(90deg,var(--q-green),var(--q-yellow),var(--q-red))"></i></div>
-                           <div class="q-badge">품질 ${qsrc}</div>`;
+          qwrap.innerHTML=`<div class="qbar"><i style="width:${pct(qsrc)}%;background:linear-gradient(90deg,var(--q-green),var(--q-yellow),var(--q-red))"></i></div>`;
           mid.appendChild(qwrap);
-        }else{
-          const qwrap=document.createElement('div'); qwrap.className='small'; qwrap.style.color='var(--muted)'; qwrap.style.marginTop='2px'; qwrap.textContent='-';
-          mid.appendChild(qwrap);
+        }
+
+        // 악세사리 유효 옵션 (상/중/하)
+        if(isAccessory){
+          const opts = (acc && acc.options && acc.options.length) ? acc.options : e.opt;
+          if(opts && opts.length){
+            const html = makeBadges(opts.slice(0,4)); // 너무 길면 컷
+            const optDiv=document.createElement('div'); optDiv.innerHTML=html; mid.appendChild(optDiv);
+          }
         }
 
         card.appendChild(icon); card.appendChild(mid);
         return card;
       }
 
-      left.forEach(e=>wrapL.appendChild(equipCard(e)));
-      right.forEach(e=>wrapR.appendChild(equipCard(e)));
+      left.forEach(e=>wrapL.appendChild(equipCard(e, false)));
+      right.forEach(e=>wrapR.appendChild(equipCard(e, true)));
 
       // 보석
       const gemRow=$('#gemRow'); gemRow.innerHTML='';
@@ -443,24 +467,24 @@
         items.forEach(it=>{
           const div=document.createElement('div'); div.className='gem';
           const img=document.createElement('img'); img.src=it.icon||fallback; img.alt='';
-          const cap=document.createElement('span'); cap.className='small'; cap.textContent = it.level?('Lv.'+it.level):'';
+          const cap=document.createElement('span'); cap.className='xsmall'; cap.textContent = it.level?('Lv.'+it.level):'';
           div.appendChild(img); div.appendChild(cap); gemRow.appendChild(div);
         });
       }else{
         for(let i=0;i<11;i++){ const div=document.createElement('div'); div.className='gem';
           const img=document.createElement('img'); img.src=fallback; img.alt=''; div.appendChild(img);
-          div.appendChild(Object.assign(document.createElement('span'),{className:'small',textContent:''}));
+          div.appendChild(Object.assign(document.createElement('span'),{className:'xsmall',textContent:''}));
           gemRow.appendChild(div);
         }
       }
-      if(g.avgLevel){ const info=document.createElement('span'); info.className='small'; info.style.marginLeft='6px'; info.textContent='평균 Lv. '+g.avgLevel; gemRow.appendChild(info); }
+      if(g.avgLevel){ const info=document.createElement('span'); info.className='xsmall'; info.style.marginLeft='6px'; info.textContent='평균 Lv. '+g.avgLevel; gemRow.appendChild(info); }
 
       // 카드
       const cardsRow=$('#cardsRow'); cardsRow.innerHTML='';
       const cs=d.cards||{}; if((cs.list||[]).length){
         cs.list.forEach(it=>{ const c=document.createElement('div'); c.className='card-item';
-          c.innerHTML=`<img src="${it.icon||'https://via.placeholder.com/64x88'}"><span class="small">x${it.awakening||0}</span>`; cardsRow.appendChild(c); });
-      }else cardsRow.innerHTML='<span class="small">카드 정보 없음</span>';
+          c.innerHTML=`<img src="${it.icon||'https://via.placeholder.com/60x82'}"><span class="xsmall">x${it.awakening||0}</span>`; cardsRow.appendChild(c); });
+      }else cardsRow.innerHTML='<span class="xsmall">카드 정보 없음</span>';
 
       $('#detailModal').classList.add('on');
     }
@@ -473,11 +497,11 @@
         const results = await Promise.allSettled(ADMIN_CHARACTERS.map(fetchChar));
         const list = results.map((r,i)=> r.status==='fulfilled'? r.value : mockChar(ADMIN_CHARACTERS[i]));
         renderGrid(list);
-        try{ localStorage.setItem('gridCache_v19', JSON.stringify(list)); }catch(_){}
+        try{ localStorage.setItem('gridCache_v20', JSON.stringify(list)); }catch(_){}
         setStatus('완료');
       }catch(err){
         __dbg('refreshAll ERR', String(err && err.message || err));
-        try{ const cache = localStorage.getItem('gridCache_v19'); if(cache){ renderGrid(JSON.parse(cache)); setStatus('오프라인 캐시 표시'); return; } }catch(_){}
+        try{ const cache = localStorage.getItem('gridCache_v20'); if(cache){ renderGrid(JSON.parse(cache)); setStatus('오프라인 캐시 표시'); return; } }catch(_){}
         renderGrid(ADMIN_CHARACTERS.map(mockChar)); setStatus('네트워크 실패: 모의 데이터 표시');
       }
     }
