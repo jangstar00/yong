@@ -31,6 +31,14 @@
     .top-banner,.bottom-banner{background:var(--glass);border-radius:var(--radius-sm);min-height:96px;display:flex;align-items:center;justify-content:center;overflow:hidden}
     .top-banner img,.bottom-banner img{width:100%;height:100%;object-fit:cover;display:block}
 
+    /* 좌우 플로팅 배너 */
+    .side-float{position:fixed; top:160px; width:300px; z-index:50; background:rgba(0,0,0,.12); border-radius:12px; overflow:hidden}
+    .side-float.left{left:16px}
+    .side-float.right{right:16px}
+    .side-float a{display:block; line-height:0}
+    .side-float img{display:block; width:100%; height:auto; object-fit:cover}
+    @media (max-width:1200px){ .side-float{display:none} }
+
     .controls{display:flex;gap:8px;align-items:center;margin-bottom:8px}
     .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
     .card-char{background:var(--panel);border-radius:var(--radius);padding:10px;display:flex;flex-direction:column;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease}
@@ -95,8 +103,10 @@
       <div style="margin-left:auto" class="small" id="status">준비됨 · 1시간 자동 갱신</div>
     </header>
 
+    <!-- 상단/하단 배너 -->
     <section class="card top-banner" id="bn-top"></section>
 
+    <!-- 메인 그리드 -->
     <section class="card" id="chars">
       <div class="controls">
         <button id="refreshAll">전체 갱신</button>
@@ -107,6 +117,10 @@
 
     <section class="card bottom-banner" id="bn-bottom"></section>
   </div>
+
+  <!-- 좌우 플로팅 배너 노드 -->
+  <div id="float-left"  class="side-float left"  style="display:none"></div>
+  <div id="float-right" class="side-float right" style="display:none"></div>
 
   <!-- 상세 모달 -->
   <div id="detailModal" class="modal" aria-modal="true" role="dialog">
@@ -175,6 +189,8 @@
     const ADMIN_CHARACTERS = ['장용노예2호','애이르','오바때끼','우니꼬쏠쏠','미드미네머너','달빛로드','신쿠fr','아장르카용나','데헌장파튀'].slice(0,20);
     const ADMIN_BANNERS = {
       top:{img:'https://jangstar00.github.io/yong/images/topbaner_tech.png',link:'https://lostark.game.onstove.com/Class?detail=scouter'},
+      left:{img:'https://jangstar00.github.io/yong/images/leftbaner_tech.png',link:'https://lostark.game.onstove.com/Class?detail=scouter'},
+      right:{img:'https://jangstar00.github.io/yong/images/rightbaner_tech.png',link:'https://lostark.game.onstove.com/Class?detail=scouter'},
       bottom:{img:'https://jangstar00.github.io/yong/images/topbaner_mj.png',link:'https://kloa.gg/characters/%EC%95%A0%EC%9D%B4%EB%A5%B4'}
     };
     const API_BASE = 'https://yong-qgw8.vercel.app/api';
@@ -190,6 +206,20 @@
     })();
 
     /* ===== 배너 ===== */
+    function createSideFloat(id, cfg){
+      const wrap = document.getElementById(id);
+      if(!wrap) return;
+      wrap.innerHTML='';
+      if(cfg && cfg.img){
+        wrap.style.display='block';
+        const a=document.createElement('a'); a.href=cfg.link||'#'; a.target='_blank'; a.rel='noopener';
+        const img=new Image(); img.src=cfg.img; img.alt=id;
+        img.onerror=()=>{ wrap.innerHTML='<div class="small" style="padding:8px">배너 로드 실패</div>'; };
+        a.appendChild(img); wrap.appendChild(a);
+      }else{
+        wrap.style.display='none';
+      }
+    }
     function loadBanners(){
       const set=(pos,id)=>{const el=document.getElementById(id); const cfg=ADMIN_BANNERS[pos]; el.innerHTML='';
         if(cfg && cfg.img){ const a=document.createElement('a'); a.href=cfg.link||'#'; a.target='_blank'; a.rel='noopener';
@@ -198,11 +228,13 @@
         } else el.innerHTML='<div class="small">'+pos+' 배너 미지정</div>';
       };
       set('top','bn-top'); set('bottom','bn-bottom');
+      createSideFloat('float-left', ADMIN_BANNERS.left);
+      createSideFloat('float-right', ADMIN_BANNERS.right);
     }
 
     /* ===== 유틸 ===== */
     const setStatus=t=>$('#status').textContent=t;
-    const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+    const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;"," >":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
     const strip=s=>String(s||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
     const fmtNum=n=>{
       if(n==null||n==='-') return '-';
@@ -240,13 +272,9 @@
         .filter(Boolean);
     }
     function extractAffixOptions(tooltipRaw){
-      // 상/중/하 라인만 뽑기
       return flattenTooltip(tooltipRaw)
         .filter(s=>/^(상|중|하)\s/.test(s))
-        .map(s=>{
-          const rank=s[0]; const text=s.replace(/^(상|중|하)\s*/,'').trim();
-          return { rank, text };
-        });
+        .map(s=>({ rank:s[0], text:s.replace(/^(상|중|하)\s*/,'').trim() }));
     }
     function parseAccessoryDetails(tooltip){
       const L=flattenTooltip(tooltip);
@@ -403,7 +431,7 @@
         if(!opts||!opts.length) return '';
         const pills = opts.map(o=>{
           const cls = o.rank==='상'?'b-high':(o.rank==='중'?'b-mid':'b-low');
-          return `<span class="badge ${cls}">${o.rank} ${esc(o.text)}</span>`;
+          return `<span class="badge ${cls}">${o.rank} ${o.text?esc(o.text):''}</span>`;
         }).join('');
         return `<div class="badges">${pills}</div>`;
       };
@@ -425,7 +453,6 @@
                            ${metaBits.length? `<span class="pill">${metaBits.join(' · ')}</span>`:''}`;
         mid.appendChild(title);
 
-        // 품질/레벨 간단 정보
         const acc=e.acc;
         const qsrc = (acc && typeof acc.quality==='number') ? acc.quality : (typeof e.quality==='number'? e.quality : null);
         const infoBits=[];
@@ -443,11 +470,10 @@
           mid.appendChild(qwrap);
         }
 
-        // 악세사리 유효 옵션 (상/중/하)
         if(isAccessory){
           const opts = (acc && acc.options && acc.options.length) ? acc.options : e.opt;
           if(opts && opts.length){
-            const html = makeBadges(opts.slice(0,4)); // 너무 길면 컷
+            const html = makeBadges(opts.slice(0,4));
             const optDiv=document.createElement('div'); optDiv.innerHTML=html; mid.appendChild(optDiv);
           }
         }
@@ -497,11 +523,11 @@
         const results = await Promise.allSettled(ADMIN_CHARACTERS.map(fetchChar));
         const list = results.map((r,i)=> r.status==='fulfilled'? r.value : mockChar(ADMIN_CHARACTERS[i]));
         renderGrid(list);
-        try{ localStorage.setItem('gridCache_v20', JSON.stringify(list)); }catch(_){}
+        try{ localStorage.setItem('gridCache_v21', JSON.stringify(list)); }catch(_){}
         setStatus('완료');
       }catch(err){
         __dbg('refreshAll ERR', String(err && err.message || err));
-        try{ const cache = localStorage.getItem('gridCache_v20'); if(cache){ renderGrid(JSON.parse(cache)); setStatus('오프라인 캐시 표시'); return; } }catch(_){}
+        try{ const cache = localStorage.getItem('gridCache_v21'); if(cache){ renderGrid(JSON.parse(cache)); setStatus('오프라인 캐시 표시'); return; } }catch(_){}
         renderGrid(ADMIN_CHARACTERS.map(mockChar)); setStatus('네트워크 실패: 모의 데이터 표시');
       }
     }
