@@ -290,6 +290,7 @@
     const parseItemLevel = raw => { if(!raw) return 0; const n=parseFloat(String(raw).replace(/[^0-9.]/g,'')); return isNaN(n)?0:n; };
     const stripTags = s => String(s||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
     const splitBR   = s => String(s||'').split(/<br\s*\/?>/i);
+    const escapeHtml = s => String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
 
     /* ===== API ===== */
     async function fetchChar(name){
@@ -382,12 +383,11 @@
       const combatPower = raw.combatPower || p.combatPower || combatPowerFromStats || '-';
 
       // 분류
-      const gearOrder = ['무기','투구','상의','하의','장갑','어깨']; // 표준 장비
       const accTypes  = ['목걸이','귀걸이','반지','어빌리티 스톤','팔찌'];
 
       const gear = [];
       const acc  = [];
-      const jewels = []; // 보석 (여기선 자리만 둠)
+      const jewels = []; // 보석 (자리)
 
       for(const x of (equips||[])){
         const it = {
@@ -412,7 +412,6 @@
         combatPower,
         gear, acc, jewels,
         engraves: engrs,
-        // 아크 패시브 합치기: 악세들에서 모아 노출
         arcPassives: acc.map(a=>a.arcPassive).filter(Boolean)
       };
     }
@@ -454,8 +453,6 @@
       setStatus(`표시: ${list.length}개 · 정렬: 아이템 레벨`);
     }
 
-    const escapeHtml = s => String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
-
     function openDetail(d){
       $('#dAvatar').src = d.avatar || '';
       $('#dName').textContent = d.name;
@@ -476,8 +473,8 @@
       else arc.innerHTML='<span class="small">표시할 항목 없음</span>';
 
       // 카드/부적/나침반/문장 자리만
-      $('#dCards').innerHTML = ''; // 필요 시 서버 데이터 붙이기
-      $('#dRelics').innerHTML = ''; // 필요 시 서버 데이터 붙이기
+      $('#dCards').innerHTML = '';
+      $('#dRelics').innerHTML = '';
 
       // 장비
       const gWrap=$('#dGear'); gWrap.innerHTML='';
@@ -494,7 +491,7 @@
         gWrap.appendChild(row);
       });
 
-      // 보석 (자리표시: 실제 데이터 연결 시 이미지 넣기)
+      // 보석 (자리표시)
       const jWrap=$('#dJewels'); jWrap.innerHTML='';
       (d.jewels||[]).forEach(j=>{
         const dot=document.createElement('div'); dot.className='jewel'; dot.textContent=j || '';
