@@ -91,7 +91,6 @@
     .equip-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
     .qbar{height:6px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}
     .qbar>i{display:block;height:6px;width:0}
-    .q-badge{font-size:var(--fz-xs);color:#eaeaea}
 
     /* 유효 옵션 뱃지 */
     .badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
@@ -130,7 +129,7 @@
   </div>
 
   <!-- 좌우 플로팅 배너 -->
-  <div id="float-left"  class="side-float left"  style="display:none">
+  <div id="float-left"  class="side-float left" style="display:none">
     <div class="float-card" id="float-left-main"></div>
   </div>
   <div id="float-right" class="side-float right" style="display:none">
@@ -212,7 +211,7 @@
         {img:'https://jangstar00.github.io/yong/images/mini_ad_2.png', link:'https://lostark.game.onstove.com/News/Notice/Views/2'},
         {img:'https://jangstar00.github.io/yong/images/mini_ad_3.png', link:'https://lostark.game.onstove.com/News/Notice/Views/3'}
       ],
-      bottom:{img:'https://jangstar00.github.io/yong/images/topbaner_single2.png',link:'https://kloa.gg/characters/%EC%95%A0%EC%9D%B4%EB%A5%B4'}
+      bottom:{img:'https://jangstar00.github.io/yong/images/topbaner_mj.png',link:'https://kloa.gg/characters/%EC%95%A0%EC%9D%B4%EB%A5%B4'}
     };
     const API_BASE = 'https://yong-qgw8.vercel.app/api';
     const AUTO_MS = 60*60*1000;
@@ -296,7 +295,6 @@
         if(L) L.style.display='none';
         if(R) R.style.display='none';
       }else{
-        // 데스크톱이면 렌더링 상태 유지
         renderSideBanners();
       }
     }
@@ -310,7 +308,7 @@
 
     /* ===== 유틸 ===== */
     const setStatus=t=>$('#status').textContent=t;
-    const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+    const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;"," >":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
     const strip=s=>String(s||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
     const fmtNum=n=>{
       if(n==null||n==='-') return '-';
@@ -323,6 +321,7 @@
       if(/고급/.test(g))return'#66bb6a'; return'#9aa6b2';
     };
 
+    /* ===== 툴팁 플랫 + 파서 ===== */
     function flattenTooltip(raw){
       if(!raw) return [];
       let j={}; try{ j=JSON.parse(String(raw).replace(/\\"/g,'"')); }catch(_){ return String(raw).split(/\n/); }
@@ -353,13 +352,53 @@
         .map(s=>({ rank:s[0], text:s.replace(/^(상|중|하)\s*/,'').trim() }));
     }
     function parseAccessoryDetails(tooltip){
-      const L=flattenTooltip(tooltip);
-      const J=L.join(' ');
-      const ilv=(J.match(/아이템\s*레벨\s*([0-9,]+)/i)||[])[1];
-      const tier=(J.match(/티어\s*([0-9])/i)||[])[1];
-      const q=(J.match(/품질\s*([0-9]{1,3}(?:\.[0-9]+)?)/i)||[])[1];
-      const options=L.filter(s=>/^(상|중|하)\s/.test(s)).map(s=>({rank:s[0], text:s.replace(/^(상|중|하)\s*/,'')}));
-      return {itemLevel:ilv?Number(ilv.replace(/,/g,'')):null, tier:tier?Number(tier):null, quality:q?Number(q):null, options};
+      const lines = flattenTooltip(tooltip);
+      const plain = lines.join(' ');
+      const ilv = (plain.match(/아이템\s*레벨\s*([0-9,]+)/i)||[])[1];
+      const tier = (plain.match(/티어\s*([0-9])/i)||[])[1];
+      const q = (plain.match(/품질\s*([0-9]{1,3}(?:\.[0-9]+)?)/i)||[])[1];
+
+      const STAT_KEYS = ['치명','특화','신속','제압','인내','숙련'];
+      const baseStats = [];
+      const bonusStats = [];
+      lines.forEach(s=>{
+        const isBase = /기본\s*효과/.test(s);
+        const isBonus = /추가\s*효과/.test(s);
+        STAT_KEYS.forEach(k=>{
+          const m = s.match(new RegExp(`${k}\\s*\\+\\s*([0-9,]+)`));
+          if(m){
+            const entry = { stat:k, value: Number(m[1].replace(/,/g,'')) };
+            if(isBase) baseStats.push(entry);
+            else if(isBonus) bonusStats.push(entry);
+            else baseStats.push(entry);
+          }
+        });
+      });
+
+      const engrNodes = [];
+      lines.forEach(s=>{
+        const m = s.match(/([가-힣A-Za-z0-9·\s]+?)\s*\+\s*([0-9]{1,2})\b/);
+        if(m){
+          const name = m[1].trim();
+          if(!STAT_KEYS.some(k=>name.includes(k)) && !/피해|공격력|방어력|생명력/i.test(name)){
+            engrNodes.push({ name, value: Number(m[2]) });
+          }
+        }
+      });
+
+      const validOpts = lines
+        .filter(s=>/^(상|중|하)\s/.test(s))
+        .map(s=>({ rank:s[0], text:s.replace(/^(상|중|하)\s*/,'').trim() }));
+
+      return {
+        itemLevel: ilv? Number(ilv.replace(/,/g,'')) : null,
+        tier: tier? Number(tier) : null,
+        quality: q? Number(q) : null,
+        baseStats,
+        bonusStats,
+        engrNodes,
+        validOpts
+      };
     }
     function parseMeta(tooltip, name, grade){
       const L=flattenTooltip(tooltip);
@@ -408,6 +447,7 @@
           const quality = (qAny!=null) ? Number(qAny) : null;
           const tstr=String(x.Type||x.Slot||'')+' '+nm;
           const isAcc=/(목걸이|귀걸이|반지|어빌리티\s*스톤|스톤|팔찌)/.test(tstr);
+          const acc = isAcc? parseAccessoryDetails(tp) : null;
           return {
             type:x.Type||x.Slot||'',
             name:nm, grade:gr, icon:ic,
@@ -415,7 +455,7 @@
             tooltip:tp,
             opt: extractAffixOptions(tp),
             meta: parseMeta(tp,nm,gr),
-            acc: isAcc? parseAccessoryDetails(tp) : null
+            acc
           };
         }),
         engraves:engrs,
@@ -469,12 +509,12 @@
       if(!engr.length) engrBox.innerHTML='<span class="xsmall">각인 정보 없음</span>';
       else engr.forEach(x=>{ const sp=document.createElement('span'); sp.className='chip'; sp.textContent=x; engrBox.appendChild(sp); });
 
-      // 트랙
+      // 트랙(진화/깨달음/도약)
       const tr=d.tracks||{}; $('#evoVal').textContent = tr.evolution!=null? tr.evolution : '-';
       $('#awakVal').textContent = tr.awakening!=null? tr.awakening : '-';
       $('#leapVal').textContent = tr.leap!=null? tr.leap : '-';
 
-      // 분류
+      // 장비/악세/트링킷 분류
       const list=d.equipment||[];
       const leftSlots=/무기|투구|모자|상의|하의|장갑|어깨/;
       const rightSlots=/목걸이|귀걸이|반지|스톤|어빌리티\s*스톤|팔찌/;
@@ -502,14 +542,6 @@
       wrapL.innerHTML=''; wrapR.innerHTML='';
 
       const pct=x=>Math.max(0,Math.min(100,Number(x)||0));
-      const makeBadges=(opts)=>{
-        if(!opts||!opts.length) return '';
-        const pills = opts.map(o=>{
-          const cls = o.rank==='상'?'b-high':(o.rank==='중'?'b-mid':'b-low');
-          return `<span class="badge ${cls}">${o.rank} ${o.text?esc(o.text):''}</span>`;
-        }).join('');
-        return `<div class="badges">${pills}</div>`;
-      };
 
       function equipCard(e, isAccessory){
         const card=document.createElement('div'); card.className='equip-card';
@@ -546,10 +578,33 @@
         }
 
         if(isAccessory){
-          const opts = (acc && acc.options && acc.options.length) ? acc.options : e.opt;
-          if(opts && opts.length){
-            const html = makeBadges(opts.slice(0,4));
-            const optDiv=document.createElement('div'); optDiv.innerHTML=html; mid.appendChild(optDiv);
+          // 유효옵션(상/중/하)
+          const vopts = (acc && acc.validOpts && acc.validOpts.length) ? acc.validOpts : e.opt;
+          if(vopts && vopts.length){
+            const pills = vopts.slice(0,6).map(o=>{
+              const rank = o.rank || (o.text?.startsWith('상')?'상':o.text?.startsWith('중')?'중':'하');
+              const cls = rank==='상'?'b-high':(rank==='중'?'b-mid':'b-low');
+              const text = o.text || (o.replace?.(/^(상|중|하)\s*/,'') ?? '');
+              return `<span class="badge ${cls}">${rank} ${esc(text)}</span>`;
+            }).join('');
+            const div=document.createElement('div'); div.innerHTML=`<div class="badges">${pills}</div>`;
+            mid.appendChild(div);
+          }
+
+          // 기본/추가 특성 뱃지
+          if(acc && ((acc.baseStats&&acc.baseStats.length) || (acc.bonusStats&&acc.bonusStats.length))){
+            const row=document.createElement('div'); row.className='equip-meta';
+            const one=(k,v)=>`<span class="pill">${esc(k)} +${Number(v).toLocaleString()}</span>`;
+            if(acc.baseStats) acc.baseStats.forEach(s=>{ row.innerHTML += one(s.stat,s.value); });
+            if(acc.bonusStats) acc.bonusStats.forEach(s=>{ row.innerHTML += one(s.stat,s.value); });
+            mid.appendChild(row);
+          }
+
+          // 각인 노드
+          if(acc && acc.engrNodes && acc.engrNodes.length){
+            const row=document.createElement('div'); row.className='equip-meta';
+            row.innerHTML = acc.engrNodes.slice(0,3).map(n=>`<span class="pill">${esc(n.name)} +${n.value}</span>`).join(' ');
+            mid.appendChild(row);
           }
         }
 
@@ -598,11 +653,11 @@
         const results = await Promise.allSettled(ADMIN_CHARACTERS.map(fetchChar));
         const list = results.map((r,i)=> r.status==='fulfilled'? r.value : mockChar(ADMIN_CHARACTERS[i]));
         renderGrid(list);
-        try{ localStorage.setItem('gridCache_v23', JSON.stringify(list)); }catch(_){}
+        try{ localStorage.setItem('gridCache_v24', JSON.stringify(list)); }catch(_){}
         setStatus('완료');
       }catch(err){
         __dbg('refreshAll ERR', String(err && err.message || err));
-        try{ const cache = localStorage.getItem('gridCache_v23'); if(cache){ renderGrid(JSON.parse(cache)); setStatus('오프라인 캐시 표시'); return; } }catch(_){}
+        try{ const cache = localStorage.getItem('gridCache_v24'); if(cache){ renderGrid(JSON.parse(cache)); setStatus('오프라인 캐시 표시'); return; } }catch(_){}
         renderGrid(ADMIN_CHARACTERS.map(mockChar)); setStatus('네트워크 실패: 모의 데이터 표시');
       }
     }
