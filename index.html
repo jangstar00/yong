@@ -10,7 +10,6 @@
       --bg:#0b0f14; --panel:#0f1720; --muted:#9aa6b2; --gold:#d4af37; --glass:rgba(255,255,255,0.04);
       --radius:16px; --radius-sm:12px; --shadow:0 6px 18px rgba(0,0,0,.5);
       --chip:#1b2432;
-      --ok:#86efac; --bad:#fda4af;
       --acc-hi:#ffb86b; --acc-mid:#c4b5fd; --acc-low:#93c5fd; --acc-neutral:#cbd5e1;
     }
     *{box-sizing:border-box}
@@ -62,7 +61,7 @@
 
     .hero{width:100%;aspect-ratio:1/1;border-radius:12px;object-fit:cover;background:#061016}
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-    .chip{background:var(--chip);padding:4px 8px;border-radius:999px;color:#d4af37;font-weight:800;font-size:12px;border:1px solid rgba(255,255,255,.09)}
+    .chip{background:#1b2432;padding:4px 8px;border-radius:999px;color:#d4af37;font-weight:800;font-size:12px;border:1px solid rgba(255,255,255,.09)}
 
     /* 상세 본문 레이아웃 */
     .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -87,25 +86,16 @@
     .inline-icons{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .tiny{width:28px;height:28px;border-radius:6px;object-fit:cover;background:#061016;border:1px solid rgba(255,255,255,.08)}
 
-    /* 보석 바 */
     .jewels{display:flex;gap:8px;flex-wrap:wrap;padding-top:6px;border-top:1px dashed rgba(255,255,255,.08);margin-top:8px}
     .jewel{width:28px;height:28px;border-radius:6px;background:#12202e;border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:11px}
 
-    /* 반응형 */
     @media (max-width:1100px){
       .panel{grid-template-columns:1fr}
       .panel .left{border-right:0;border-bottom:1px solid rgba(255,255,255,.06)}
     }
-    @media (max-width:980px){
-      .grid{grid-template-columns:repeat(3,1fr)}
-    }
-    @media (max-width:760px){
-      .grid{grid-template-columns:repeat(2,1fr)}
-      .card{padding:12px}
-    }
-    @media (max-width:520px){
-      .grid{grid-template-columns:1fr}
-    }
+    @media (max-width:980px){ .grid{grid-template-columns:repeat(3,1fr)} }
+    @media (max-width:760px){ .grid{grid-template-columns:repeat(2,1fr)} .card{padding:12px} }
+    @media (max-width:520px){ .grid{grid-template-columns:1fr} }
     /* 모바일에서는 좌우 배너 숨김 */
     @media (max-width:1200px){ .side-float{display:none} }
   </style>
@@ -155,27 +145,22 @@
           </div>
         </div>
 
-        <!-- 각인/카드/부적+나침반+문장/보석 -->
         <div class="section">
           <h4>각인</h4>
           <div id="dEngr" class="inline-icons"></div>
         </div>
-
         <div class="section">
           <h4>아크 패시브</h4>
           <div class="inline-icons" id="dArc"></div>
         </div>
-
         <div class="section">
           <h4>카드</h4>
           <div id="dCards" class="inline-icons"></div>
         </div>
-
         <div class="section">
           <h4>부적 · 나침반 · 문장</h4>
           <div id="dRelics" class="inline-icons"></div>
         </div>
-
       </div>
 
       <div class="right">
@@ -215,7 +200,7 @@
       top:    { img: 'https://jangstar00.github.io/yong/images/topbaner_tech.png',   link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
       left:   { img: 'https://jangstar00.github.io/yong/images/leftbaner_tech.png',  link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
       right:  { img: 'https://jangstar00.github.io/yong/images/rightbaner_tech.png', link: 'https://lostark.game.onstove.com/Class?detail=scouter' },
-      bottom: { img: 'https://jangstar00.github.io/yong/images/topbaner_single2.png',     link: 'https://kloa.gg/characters/%EC%95%A0%EC%9D%B4%EB%A5%B4' },
+      bottom: { img: 'https://jangstar00.github.io/yong/images/topbaner_single2.png', link: 'https://kloa.gg/characters/%EC%95%A0%EC%9D%B4%EB%A5%B4' },
       rightMini: [
         { img: 'https://jangstar00.github.io/yong/images/mini1.png', link: 'https://kloa.gg' },
         { img: 'https://jangstar00.github.io/yong/images/mini2.png', link: 'https://iloa.gg' },
@@ -223,9 +208,10 @@
       ]
     };
 
-    const API_BASE = 'https://yong-qgw8.vercel.app/api'; // 네 vercel 프록시
-    const AUTO_MS = 60*60*1000;
+    /* ===== 절대경로(API 프록시) — 여기 고정 ===== */
+    const API_BASE = 'https://yong-qgw8.vercel.app/api';
 
+    const AUTO_MS = 60*60*1000;
     const $ = s => document.querySelector(s);
 
     /* ===== 디버그 ===== */
@@ -259,7 +245,6 @@
           a.appendChild(img); el.appendChild(a);
         }else el.innerHTML = `<div class="small">${pos} 배너 미지정</div>`;
       }
-      // 좌/우
       const setSide=(side,cfg)=>{
         const wrap = document.getElementById('float-'+side);
         if(!wrap) return;
@@ -292,139 +277,94 @@
     const splitBR   = s => String(s||'').split(/<br\s*\/?>/i);
     const escapeHtml = s => String(s||'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
 
-    /* ===== API ===== */
-    async function fetchChar(name){
-      const url = `${API_BASE}/character?name=${encodeURIComponent(name)}&_t=${Date.now()}`;
-      try{
-        __dbg('REQ '+name, {url});
-        const res = await fetch(url, {mode:'cors', cache:'no-store'});
-        const status = res.status;
-        const text = await res.text();
-        __dbg('RES '+name+' ('+status+')', text);
-        if(!res.ok) throw new Error('API '+status);
-
-        let raw; try{ raw = JSON.parse(text); }catch{ raw=text; }
-        if(raw && !raw.ArmoryProfile && (raw.CharacterName || raw.ItemMaxLevel || raw.ItemAvgLevel || raw.ItemLevel)){
-          raw = { ArmoryProfile: raw };
-        }
-        const mapped = mapArmory(raw);
-        __dbg('MAP '+name, mapped);
-        return mapped;
-      }catch(e){
-        __dbg('ERR '+name, String(e?.message||e));
-        return mockChar(name);
-      }
+    /* ===== 안전 fetch with 캐시버스터 ===== */
+    async function fetchJson(url){
+      const bust = url.includes('?') ? '&_t=' + Date.now() : '?_t=' + Date.now();
+      const full = url + bust;
+      __dbg('REQ', full);
+      const r = await fetch(full, { mode:'cors', cache:'no-store' });
+      const text = await r.text();
+      __dbg('RES '+r.status, text.slice(0,1000));
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      try{ return JSON.parse(text); }catch{ return {}; }
     }
 
-    /* ===== 파서: 악세 툴팁 ===== */
+    /* ===== 악세 툴팁 파서 ===== */
     function parseAccessoryFromTooltip(rawTooltip){
       let t; try{ t = JSON.parse(String(rawTooltip)); }catch{ return null; }
       const isGreyLine = s => /#686660/i.test(s||'');
-      const pickQuality = t?.Element_001?.value?.qualityValue ?? null;
+      const quality = t?.Element_001?.value?.qualityValue ?? null;
 
-      // 기본 효과
       const baseHtml = t?.Element_004?.value?.Element_001 || '';
-      const baseLines = splitBR(baseHtml)
-        .filter(line => line && !isGreyLine(line))
-        .map(line => stripTags(line))
-        .filter(Boolean);
+      const baseStats = splitBR(baseHtml).filter(l=>l && !isGreyLine(l)).map(l=>stripTags(l)).filter(Boolean);
 
-      // 연마 효과(유효옵션)
       const refineHtml = t?.Element_006?.value?.Element_001 || '';
-      let refinements = splitBR(refineHtml).map(s=>stripTags(s)).filter(Boolean);
+      const refinements = splitBR(refineHtml)
+        .map(l=>stripTags(l)).filter(Boolean)
+        .map(txt=>{
+          let grade='neutral', label='';
+          if(/^\s*상\b/.test(txt)){ grade='hi'; label='상'; txt=txt.replace(/^\s*상\s*/,''); }
+          else if(/^\s*중\b/.test(txt)){ grade='mid'; label='중'; txt=txt.replace(/^\s*중\s*/,''); }
+          else if(/^\s*하\b/.test(txt)){ grade='low'; label='하'; txt=txt.replace(/^\s*하\s*/,''); }
+          return { grade, label:label||'옵션', text:txt };
+        });
 
-      // 등급 배지 판단: 줄 시작이 '상/중/하'
-      const refined = refinements.map(txt=>{
-        let grade='neutral', label='';
-        if(/^\s*상\b/.test(txt)) { grade='hi'; label='상'; txt=txt.replace(/^\s*상\s*/,''); }
-        else if(/^\s*중\b/.test(txt)) { grade='mid'; label='중'; txt=txt.replace(/^\s*중\s*/,''); }
-        else if(/^\s*하\b/.test(txt)) { grade='low'; label='하'; txt=txt.replace(/^\s*하\s*/,''); }
-        return {grade,label,text:txt};
-      });
-
-      // 아크 패시브(진화/깨달음/도약계)
       const arcPassive = stripTags(t?.Element_008?.value?.Element_001||''); // "깨달음 +13" 등
-
-      return {
-        quality: pickQuality,
-        baseStats: baseLines,
-        refinements: refined,
-        arcPassive
-      };
+      return { quality, baseStats, refinements, arcPassive };
     }
 
-    /* ===== 맵핑 ===== */
-    function mapArmory(raw){
-      raw = raw || {};
-      const p = raw.ArmoryProfile || {};
-      const equips = raw.ArmoryEquipment || raw.Equipment || [];
-      const engrObj = (raw.ArmoryEngraving && raw.ArmoryEngraving.Engravings) ? raw.ArmoryEngraving.Engravings : [];
-      const engrs = engrObj.map(e=>{
-        const nm = e?.Name || '';
-        const lv = e?.Level ? (' Lv.'+e.Level) : '';
-        return (nm+lv).trim();
+    /* ===== 백엔드 응답 맵핑 ===== */
+    function mapArmory(resp){
+      // resp = { ok:true, data:{...} } 형태 (너의 Vercel API)
+      const raw = resp?.data || {};
+      const p = {
+        CharacterName: raw.name,
+        ServerName: raw.server,
+        CharacterClassName: raw.cls,
+        CharacterImage: raw.avatar,
+        ItemMaxLevel: raw.itemLevelText,
+        Stats: raw.stats || []
+      };
+
+      // combatPower는 문자열 그대로 사용
+      const combatPower = raw.combatPower ?? '-';
+
+      // 장비/악세 분리: 너의 백엔드는 equipment 통째 전달함
+      const srcEq = Array.isArray(raw.equipment) ? raw.equipment : [];
+      const accTypes = ['목걸이','귀걸이','반지','어빌리티 스톤','팔찌'];
+
+      const gear=[], acc=[];
+      srcEq.forEach(x=>{
+        const item = {
+          type: x.Type, name: x.Name, grade: x.Grade || '',
+          icon: x.Icon || '', tooltip: x.Tooltip || '', quality: (typeof x.Quality==='number'? x.Quality : null)
+        };
+        if (accTypes.includes(item.type)) {
+          const parsed = parseAccessoryFromTooltip(item.tooltip);
+          if (parsed) Object.assign(item, parsed);
+          acc.push(item);
+        } else {
+          gear.push(item);
+        }
       });
 
-      const ilvText =
-        p.ItemMaxLevel || p.ItemAvgLevel || p.ItemLevel ||
-        p['Item Max Level'] || p['Item Avg Level'] || p['Item Level'] || '-';
+      // 각인: 문자열 배열로 와있음
+      const engraves = Array.isArray(raw.engraves) ? raw.engraves : [];
 
-      // 전투력: stats에서 공격력/전투력 찾아보기 + 백엔드 combatPower
-      const stats = Array.isArray(p.Stats) ? p.Stats : (raw.ArmoryProfile?.Stats || raw.stats || []);
-      const pickStat = keys=>{
-        for(const s of (stats||[])){
-          const k = String(s.Type||s.Name||'').toLowerCase();
-          for(const kk of keys){ if(k.includes(kk)) return s.Value || s.value || null; }
-        }
-        return null;
-      };
-
-      const combatPowerFromStats = pickStat(['전투력','combat power','combat']);
-      const combatPower = raw.combatPower || p.combatPower || combatPowerFromStats || '-';
-
-      // 분류
-      const accTypes  = ['목걸이','귀걸이','반지','어빌리티 스톤','팔찌'];
-
-      const gear = [];
-      const acc  = [];
-      const jewels = []; // 보석 (자리)
-
-      for(const x of (equips||[])){
-        const it = {
-          type:x.Type, name:x.Name, grade:x.Grade||'', icon:x.Icon||'',
-          tooltip:x.Tooltip||'', quality: x.Quality ?? null
-        };
-        if(accTypes.includes(it.type)){
-          const parsed = parseAccessoryFromTooltip(it.tooltip);
-          acc.push(Object.assign(it, parsed||{}));
-        }else{
-          gear.push(it);
-        }
-      }
+      // 보석/카드 자리 (백엔드 요약값 있으면 사용)
+      const jewels = raw.gems || null;
+      const cards  = raw.cards || null;
 
       return {
-        name: p.CharacterName || raw.name || '-',
-        server: p.ServerName || raw.server || '-',
-        cls: p.CharacterClassName || raw.cls || '-',
-        avatar: p.CharacterImage || raw.avatar || '',
-        itemLevelText: ilvText,
-        itemLevelNum: parseItemLevel(ilvText),
-        combatPower,
-        gear, acc, jewels,
-        engraves: engrs,
-        arcPassives: acc.map(a=>a.arcPassive).filter(Boolean)
-      };
-    }
-
-    function mockChar(name){
-      const ilv = 1500 + Math.floor(Math.random()*300);
-      return {
-        name, server:'아만', cls:'버서커', avatar:'',
-        itemLevelText: ilv.toFixed(2), itemLevelNum: ilv,
-        combatPower: (1000 + Math.floor(Math.random()*9000)).toFixed(2),
-        gear:[], acc:[], jewels:[],
-        engraves:['원한 Lv.3','예리한 둔기 Lv.3'],
-        arcPassives:[]
+        name: p.CharacterName || '-',
+        server: p.ServerName || '-',
+        cls: p.CharacterClassName || '-',
+        avatar: p.CharacterImage || '',
+        itemLevelText: p.ItemMaxLevel || '-',
+        itemLevelNum: (function(v){ const n=parseFloat(String(v).replace(/[^0-9.]/g,'')); return isNaN(n)?0:n; })(p.ItemMaxLevel),
+        combatPower: String(combatPower || '-'),
+        gear, acc, jewels, cards,
+        engraves
       };
     }
 
@@ -466,14 +406,23 @@
       if((d.engraves||[]).length){ d.engraves.forEach(t=>{ const x=document.createElement('span'); x.className='chip'; x.textContent=t; enWrap.appendChild(x); }); }
       else enWrap.innerHTML='<span class="small">각인 정보 없음</span>';
 
-      // 아크 패시브
+      // 아크 패시브(악세에서 추출된 텍스트)
       const arc=$('#dArc'); arc.innerHTML='';
-      const mergedArc = (d.arcPassives||[]).slice(0,6);
-      if(mergedArc.length) mergedArc.forEach(t=>{ const c=document.createElement('span'); c.className='chip'; c.textContent=t; arc.appendChild(c); });
+      const arcList = (d.acc||[]).map(a=>a.arcPassive).filter(Boolean).slice(0,6);
+      if(arcList.length) arcList.forEach(t=>{ const c=document.createElement('span'); c.className='chip'; c.textContent=t; arc.appendChild(c); });
       else arc.innerHTML='<span class="small">표시할 항목 없음</span>';
 
-      // 카드/부적/나침반/문장 자리만
-      $('#dCards').innerHTML = '';
+      // 카드 요약(있으면 노출)
+      const cards=$('#dCards'); cards.innerHTML='';
+      if(d.cards && d.cards.setName){
+        const c=document.createElement('span'); c.className='chip';
+        c.textContent = `${d.cards.setName} x${d.cards.setCount} (각성 합 ${d.cards.awakeningTotal})`;
+        cards.appendChild(c);
+      }else{
+        cards.innerHTML='<span class="small">카드 정보 없음</span>';
+      }
+
+      // 부적/나침반/문장 자리 (원하면 후처리)
       $('#dRelics').innerHTML = '';
 
       // 장비
@@ -484,19 +433,20 @@
           <img class="icon" src="${e.icon||''}" alt="">
           <div>
             <div class="title">${escapeHtml(e.name||'-')}</div>
-            <div class="small" style="opacity:.8">${escapeHtml(e.grade||'')}</div>
+            <div class="small" style="opacity:.8">${escapeHtml(e.grade||'')} · ${escapeHtml(e.type||'')}</div>
           </div>
           <div></div>
         `;
         gWrap.appendChild(row);
       });
 
-      // 보석 (자리표시)
+      // 보석 (백엔드 요약값 있으면 간이 표기)
       const jWrap=$('#dJewels'); jWrap.innerHTML='';
-      (d.jewels||[]).forEach(j=>{
-        const dot=document.createElement('div'); dot.className='jewel'; dot.textContent=j || '';
-        jWrap.appendChild(dot);
-      });
+      if(d.jewels && d.jewels.counts){
+        const info = `평균레벨 ${d.jewels.avgLevel||'-'} · 멸화 ${d.jewels.counts.damage} · 홍염 ${d.jewels.counts.cooldown}`;
+        const tag=document.createElement('span'); tag.className='chip'; tag.textContent=info;
+        jWrap.appendChild(tag);
+      }
 
       // 악세사리
       const aWrap=$('#dAcc'); aWrap.innerHTML='';
@@ -525,22 +475,37 @@
       $('#detailModal').classList.add('on');
     }
 
-    /* ===== 로드 ===== */
+    /* ===== 데이터 로딩 ===== */
+    async function fetchChar(name){
+      const url = `${API_BASE}/character?name=${encodeURIComponent(name)}`;
+      try{
+        const j = await fetchJson(url);
+        if(!j.ok) throw new Error('upstream fail');
+        const mapped = mapArmory(j);
+        return mapped;
+      }catch(e){
+        __dbg('ERR '+name, String(e?.message||e));
+        return {
+          name, server:'-', cls:'-', avatar:'',
+          itemLevelText:'-', itemLevelNum:0, combatPower:'-',
+          gear:[], acc:[], jewels:null, cards:null, engraves:[]
+        };
+      }
+    }
+
     async function refreshAll(){
       try{
         setStatus(navigator.onLine? '전체 불러오는 중...' : '오프라인: 캐시/모의 데이터 표시');
         const list = await Promise.all(ADMIN_CHARACTERS.map(fetchChar));
         list.sort((a,b)=> b.itemLevelNum - a.itemLevelNum);
         renderGrid(list);
-        try{ localStorage.setItem('gridCache_v4', JSON.stringify(list)); }catch{}
+        try{ localStorage.setItem('gridCache_v5', JSON.stringify(list)); }catch{}
       }catch(e){
         __dbg('refreshAll ERR', String(e?.message||e));
         try{
-          const cache = localStorage.getItem('gridCache_v4');
+          const cache = localStorage.getItem('gridCache_v5');
           if(cache){ renderGrid(JSON.parse(cache)); setStatus('오프라인 캐시 표시'); return; }
         }catch{}
-        const list2 = ADMIN_CHARACTERS.map(mockChar).sort((a,b)=>b.itemLevelNum-a.itemLevelNum);
-        renderGrid(list2);
         setStatus('네트워크 실패: 모의 데이터 표시');
       }
     }
